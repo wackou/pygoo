@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-4.6.dtd">
 <!-- eric4 project file for project PyGoo -->
-<!-- Saved: 2010-05-10, 23:34:57 -->
+<!-- Saved: 2010-05-11, 00:37:44 -->
 <!-- Copyright (C) 2010 Nicolas Wack, wackou@gmail.com -->
 <Project version="4.6">
   <Language>en</Language>
@@ -14,7 +14,26 @@
   <Sources>
     <Source>setup.py</Source>
     <Source>pygoo/__init__.py</Source>
-    <Source>__init__.py</Source>
+    <Source>pygoo/abstractdirectedgraph.py</Source>
+    <Source>pygoo/abstractnode.py</Source>
+    <Source>pygoo/baseobject.py</Source>
+    <Source>pygoo/memoryobjectgraph.py</Source>
+    <Source>pygoo/memoryobjectnode.py</Source>
+    <Source>pygoo/neo.py</Source>
+    <Source>pygoo/neo4jobjectgraph.py</Source>
+    <Source>pygoo/neo4jobjectnode.py</Source>
+    <Source>pygoo/objectgraph.py</Source>
+    <Source>pygoo/objectnode.py</Source>
+    <Source>pygoo/ontology.py</Source>
+    <Source>pygoo/utils.py</Source>
+    <Source>README.rst</Source>
+    <Source>NEWS.txt</Source>
+    <Source>test/test_inheritance.py</Source>
+    <Source>test/test_basicnode.py</Source>
+    <Source>test/test_memory.py</Source>
+    <Source>test/test_datamodel.py</Source>
+    <Source>test/pygootest.py</Source>
+    <Source>test/mediaontology.py</Source>
   </Sources>
   <Forms>
   </Forms>

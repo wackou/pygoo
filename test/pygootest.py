@@ -18,8 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from memoryobjectgraph import MemoryGraph, MemoryObjectGraph
-from objectgraph import Equal
-from baseobject import BaseObject
-from utils import tolist, toresult
-import ontology
+from unittest import TestCase
+from pygoo import *
+import logging
+logging.getLogger('pygoo').setLevel(logging.WARNING)
+
+# before starting any tests, save pygoo's media ontology in case we mess with it and need it again later
+from mediaontology import *
+ontology.saveCurrentOntology('media')

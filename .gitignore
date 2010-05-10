@@ -1,0 +1,6 @@
+*.pyc
+.coverage
+.eric4project/
+dist/
+pygoo.egg-info/
+
