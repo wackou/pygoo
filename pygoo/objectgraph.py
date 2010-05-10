@@ -299,7 +299,7 @@ class ObjectGraph(AbstractDirectedGraph):
 
     def findOne(self, type = None, validNode = lambda x: True, **kwargs):
         """Returns a single result. see findAll for description.
-        Raises an exception of no result was found."""
+        Raises an exception if no result was found."""
         # NB: as _findAll is a generator, this should be fairly optimized
         result = self._findAll(type, validNode, **kwargs)
         try:
