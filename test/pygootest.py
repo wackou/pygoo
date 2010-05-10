@@ -18,8 +18,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# import unittest and everything from pygoo
 from unittest import TestCase
 from pygoo import *
+
+# import potentially useful modules for the tests (which will import * from this file)
+import os
+
+# we don't want to be too verbose in tests
 import logging
 logging.getLogger('pygoo').setLevel(logging.WARNING)
 
