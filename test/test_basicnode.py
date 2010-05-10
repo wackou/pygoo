@@ -178,13 +178,16 @@ class TestAbstractNode(TestCase):
         self.assertEqual(o1.friendOf, n4)
         self.assertEqual(o2.friendOf, n4)
 
-        g1.save('/tmp/smewt_unittest.db')
+        g1.save('/tmp/pygoo_unittest.db')
 
         g3 = GraphClass()
-        g3.load('/tmp/smewt_unittest.db')
+        g3.load('/tmp/pygoo_unittest.db')
 
         self.assertEqual(g3.findOne(NiceGuy, n = 'n2').friend.a, 23)
         self.assertEqual(g3.findOne(NiceGuy, n = 'n2').friend._node, g3.findOne(BaseObject, n = 'n1')._node)
+
+        os.remove('/tmp/pygoo_unittest.db')
+
 
     def testAddObject(self):
         ontology.importOntology('media')
