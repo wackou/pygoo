@@ -145,7 +145,7 @@ def validate_class_definition(cls, attrs):
     # validate attribute types as defined in schema
     for name, ctype in cls.schema.items():
         if not isinstance(name, str) or not any(issubclass(ctype, dtype) for dtype in valid_types):
-            raise TypeError("In '%s': the schema should be a dict of 'str' to either one of those accepted types (or a subclass of them): %s'" % (cls.__name__, ', '.join("'%s'" % c.__name__ for c in validTypes)))
+            raise TypeError("In '%s': the schema should be a dict of 'str' to either one of those accepted types (or a subclass of them): %s'" % (cls.__name__, ', '.join("'%s'" % c.__name__ for c in valid_types)))
 
 
     # all the properties defined as subclasses of BaseObject need to have an
@@ -167,7 +167,7 @@ def validate_class_definition(cls, attrs):
         raise TypeError("In '%s': you should define exactly one reverseLookup name for each property in your schema that is a subclass of BaseObject, different ones: %s" % (cls.__name__, ', '.join("'%s'" % c for c in diff)))
 
     # directly update the schema for other classes where needed
-    # TODO: make sure we don't overwrite anything (should have been done in the validateClassDefinition, right?)
+    # TODO: make sure we don't overwrite anything (should have been done in the validate_class_definition, right?)
     for prop, rprop in orig_reverse_lookup.items():
         for c in subclasses(cls.schema[prop]):
             c.schema._implicit.add(rprop)

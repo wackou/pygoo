@@ -60,7 +60,7 @@ class TestAbstractNode(TestCase):
         d = D()
         3 in d
 
-    def testAbstractNode(self, GraphClass = MemoryGraph):
+    def testAbstractNode(self, GraphClass = MemoryObjectGraph):
         g = GraphClass()
 
         n = g.create_node()

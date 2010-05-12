@@ -144,33 +144,6 @@ class AbstractNode(object):
 
     ### Additional utility methods
 
-    def same_properties(self, other, props = None, exclude = []):
-        # NB: sameValidProperties and sameUniqueProperties should be defined in BaseObject
-        # TODO: this can surely be optimized
-        if props is None:
-            props = other.items()
-        else:
-            props = [ (p, other.get(p)) for p in props ]
-
-        for name, value in props:
-            if name in exclude:
-                continue
-            if isinstance(value, types.GeneratorType):
-                svalue = list(self.get(name))
-                value = list(value)
-
-                # FIXME: v1.virtual() should not be used here...
-                result = (len(svalue) == len(value) and
-                          all(v1.virtual() == v2.virtual() for v1, v2 in zip(svalue, value)))
-
-                if result is False:
-                    return False
-            else:
-                if self.get(name) != value:
-                    return False
-
-        return True
-
     def unlink_all(self):
         for name, nodes in self.edge_items():
             for n in nodes:

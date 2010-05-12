@@ -43,7 +43,7 @@ def open(dbpath):
         raise RuntimeError("A Neo4j database is already open. Please close it before opening a new one.")
 
     dirname = dbpath
-    graph = NeoService(dbpath, jvm = defaultJVM())
+    graph = NeoService(dbpath, jvm = default_jvm())
     transaction = graph.transaction
 
 

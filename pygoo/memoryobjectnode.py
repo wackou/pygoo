@@ -26,7 +26,7 @@ import logging
 
 log = logging.getLogger('pygoo.MemoryObjectNode')
 
-class MemoryNode(AbstractNode):
+class MemoryObjectNode(ObjectNode):
 
     def __init__(self, graph, props = list(), _classes = set()):
         # NB: this should go before super().__init__() because we need
@@ -34,7 +34,7 @@ class MemoryNode(AbstractNode):
         #     attributes
         self._props = {}
         self._classes = set(_classes)
-        super(MemoryNode, self).__init__(graph, props)
+        super(MemoryObjectNode, self).__init__(graph, props)
 
         log.debug('MemoryNode.__init__: classes = %s' % list(self._classes))
         graph._nodes.add(self)
@@ -51,7 +51,7 @@ class MemoryNode(AbstractNode):
         if name in [ '_props', '_classes' ]:
             object.__setattr__(self, name, value)
         else:
-            super(MemoryNode, self).__setattr__(name, value)
+            super(MemoryObjectNode, self).__setattr__(name, value)
 
 
     ### Ontology methods
@@ -168,10 +168,3 @@ class MemoryNode(AbstractNode):
             # no need to do anything
             pass
 
-
-# MemoryNode needs to come before ObjectNode, because we want it to be able to
-# override ObjectNode's methods (for optimization, for instance)
-class MemoryObjectNode(MemoryNode, ObjectNode):
-    def __init__(self, graph, props = [], _classes = set()):
-        log.debug('MemoryObjectNode.__init__: props = %s' % str(props))
-        super(MemoryObjectNode, self).__init__(graph, props, _classes)

@@ -21,6 +21,7 @@
 from __future__ import with_statement
 from pygoo.memoryobjectnode import MemoryObjectNode
 from pygoo.objectnode import ObjectNode
+from pygoo.utils import toresult
 import neo
 import logging
 
@@ -84,7 +85,7 @@ class Neo4jObjectNode(MemoryObjectNode):
 
     def get_link(self, name):
         log.debug('getlink:', name)
-        return to_result([ r.end for r in self._neonode.relationships() if r.type == name ])
+        return toresult([ r.end for r in self._neonode.relationships() if r.type == name ])
 
     def get_literal(self, name):
         log.debug('getliteral:', name)

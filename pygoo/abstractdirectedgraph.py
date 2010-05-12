@@ -57,11 +57,11 @@ class AbstractDirectedGraph(object):
 
     """
 
-    def clear():
+    def clear(self):
         """Delete all nodes and links in this graph."""
         raise NotImplementedError
 
-    def create_node(self, props = []):
+    def create_node(self, props = [], _classes = set()):
          raise NotImplementedError
 
     def delete_node(self, node):

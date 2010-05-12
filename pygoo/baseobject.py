@@ -197,7 +197,7 @@ class BaseObject(object):
         # if we just created a node and the graph is static, we gave it its valid classes without actually checking...
         # if not a valid instance, remove it from the list of valid classes so that the next check will fail
         if created and not self._node.graph()._dynamic:
-            if allow_incomplete and not self._node.has_valid_properties(self.__class__, self.__class__.valid.intersection(set(self._node.keys()))):
+            if allow_incomplete and not self._node.has_valid_properties(self.__class__, set(self.__class__.valid).intersection(set(self._node.keys()))):
                 self._node.remove_class(self.__class__)
             if not allow_incomplete and not self._node.is_valid_instance(self.__class__):
                 self._node.remove_class(self.__class__)

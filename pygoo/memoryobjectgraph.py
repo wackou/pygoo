@@ -20,18 +20,18 @@
 
 from pygoo.objectnode import ObjectNode
 from pygoo.abstractdirectedgraph import AbstractDirectedGraph
-from pygoo.memoryobjectnode import MemoryNode, MemoryObjectNode
+from pygoo.memoryobjectnode import MemoryObjectNode
 from pygoo.objectgraph import ObjectGraph
 import logging
 
 log = logging.getLogger('pygoo.MemoryObjectGraph')
 
 
-class MemoryGraph(AbstractDirectedGraph):
-    _object_node_class = MemoryNode
+class MemoryObjectGraph(ObjectGraph):
+    _object_node_class = MemoryObjectNode
 
     def __init__(self, **kwargs):
-        super(MemoryGraph, self).__init__(**kwargs)
+        super(MemoryObjectGraph, self).__init__(**kwargs)
         self._nodes = set()
 
     def clear(self):
@@ -62,7 +62,5 @@ class MemoryGraph(AbstractDirectedGraph):
     # __getstate__ and __setstate__ are needed for the cache to be able to work
     def __setstate__(self, state):
         self._nodes = set()
-        super(MemoryGraph, self).__setstate__(state)
+        super(MemoryObjectGraph, self).__setstate__(state)
 
-class MemoryObjectGraph(MemoryGraph, ObjectGraph):
-    _object_node_class = MemoryObjectNode
