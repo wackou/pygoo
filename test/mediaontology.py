@@ -40,8 +40,8 @@ class Media(BaseObject):
 
     valid = [ 'filename' ]
     unique = [ 'filename' ]
-    reverseLookup = { 'metadata': 'files',
-                      'matches': 'query' }
+    reverse_lookup = { 'metadata': 'files',
+                       'matches': 'query' }
 
     types = { 'video': [ 'avi', 'ogm', 'mkv', 'mpg', 'mpeg' ],
               'subtitle': [ 'sub', 'srt' ]
@@ -81,7 +81,7 @@ class Episode(Metadata):
                }
 
     valid = [ 'series', 'season', 'episodeNumber' ]
-    reverseLookup = { 'series': 'episodes' }
+    reverse_lookup = { 'series': 'episodes' }
     #order = [ 'series', 'season', 'episodeNumber',  'title' ]
 
     unique = [ 'series', 'season', 'episodeNumber' ]
@@ -121,7 +121,7 @@ class Subtitle(Metadata):
 
     valid = [ 'metadata' ]
 
-    reverseLookup = { 'metadata': 'subtitles' }
+    reverse_lookup = { 'metadata': 'subtitles' }
 
     order = [ 'metadata', 'language' ]
 
@@ -137,7 +137,7 @@ class Comment(BaseObject):
                'date': int
                }
 
-    reverseLookup = { 'metadata': 'comments' }
+    reverse_lookup = { 'metadata': 'comments' }
 
     valid = [ 'metadata', 'author', 'date' ]
     unique = [ 'metadata', 'author', 'date' ]

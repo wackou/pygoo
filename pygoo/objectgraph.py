@@ -18,29 +18,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from objectnode import ObjectNode
-from abstractdirectedgraph import AbstractDirectedGraph, Equal
-from abstractnode import AbstractNode
-from baseobject import BaseObject, getNode
-from utils import reverseLookup, toresult
+from pygoo.objectnode import ObjectNode
+from pygoo.abstractdirectedgraph import AbstractDirectedGraph, Equal
+from pygoo.abstractnode import AbstractNode
+from pygoo.baseobject import BaseObject, get_node
+from pygoo.utils import reverse_lookup, toresult
+from pygoo import ontology
 import types
-import ontology
 import logging
 
 log = logging.getLogger('pygoo.ObjectGraph')
 
 
 
-def wrapNode(node, nodeClass = None):
-    if nodeClass is None:
-        nodeClass = BaseObject
-    return nodeClass(basenode = node)
+def wrap_node(node, node_class = None):
+    if node_class is None:
+        node_class = BaseObject
+    return node_class(basenode = node)
 
-def unwrapNode(node):
-    nodeClass = node.__class__ if isinstance(node, BaseObject) else None
-    node = getNode(node)
+def unwrap_node(node):
+    node_class = node.__class__ if isinstance(node, BaseObject) else None
+    node = get_node(node)
 
-    return node, nodeClass
+    return node, node_class
 
 
 
@@ -73,7 +73,7 @@ class ObjectGraph(AbstractDirectedGraph):
 
     # this should be set to the used ObjectNode class (ie: MemoryObjectNode or Neo4jObjectNode)
     # in the corresponding derived ObjectGraph class
-    _objectNodeClass = type(None)
+    _object_node_class = type(None)
 
     def __init__(self, dynamic = False):
         """Creates an ObjectGraph.
@@ -81,29 +81,29 @@ class ObjectGraph(AbstractDirectedGraph):
         - if dynamic = True, we have static inheritance (valid classes need to be set explicitly)
         - if dynamic = False, we have dynamic type classes (valid classes are automatically updated if the object has the correct properties)
         """
-        ontology.registerGraph(self)
+        ontology.register_graph(self)
         self._dynamic = dynamic
 
-    def revalidateObjects(self):
+    def revalidate_objects(self):
         if not self._dynamic:
             return
 
         log.info('revalidating objects in graph %s' % self)
         for node in self.nodes():
-            node.updateValidClasses()
+            node.update_valid_classes()
 
     def __getattr__(self, name):
         # if attr is not found and starts with an upper case letter, it might be the name
         # of one of the registered classes. In that case, return a function that would instantiate
         # such an object in this graph
-        if name[0].isupper() and name in ontology.classNames():
+        if name[0].isupper() and name in ontology.class_names():
             def inst(basenode = None, **kwargs):
                 # if we're copying a node from a different graph, we need to intercept it here to
                 # add it correctly with its dependencies instead of creating from scratch
                 if basenode is not None and basenode._node.graph() != self:
-                    return self.addObject(basenode)
+                    return self.add_object(basenode)
 
-                return ontology.getClass(name)(basenode = basenode, graph = self, **kwargs)
+                return ontology.get_class(name)(basenode = basenode, graph = self, **kwargs)
 
             return inst
 
@@ -111,25 +111,25 @@ class ObjectGraph(AbstractDirectedGraph):
 
     def __contains__(self, node):
         """Return whether this graph contains the given node  or object (identity)."""
-        return self.contains(getNode(node))
+        return self.contains(get_node(node))
 
 
-    def addLink(self, node, name, otherNode, reverseName):
+    def add_link(self, node, name, other_node, reverse_name):
         # otherNode should always be a valid node
-        self.addDirectedEdge(node, name, otherNode)
-        self.addDirectedEdge(otherNode, reverseName, node)
+        self.add_directed_edge(node, name, other_node)
+        self.add_directed_edge(other_node, reverse_name, node)
 
-    def removeLink(self, node, name, otherNode, reverseName):
-        # otherNode should always be a valid node
-        self.removeDirectedEdge(node, name, otherNode)
-        self.removeDirectedEdge(otherNode, reverseName, node)
-
-
-    def addNode(self, node, recurse = Equal.OnIdentity, excludedDeps = []):
-        return self.addObject(BaseObject(node), recurse, excludedDeps)
+    def remove_link(self, node, name, other_node, reverse_name):
+        # other_node should always be a valid node
+        self.remove_directed_edge(node, name, other_node)
+        self.remove_directed_edge(other_node, reverse_name, node)
 
 
-    def addObject(self, node, recurse = Equal.OnIdentity, excludedDeps = []):
+    def add_node(self, node, recurse = Equal.OnIdentity, excluded_deps = []):
+        return self.add_object(BaseObject(node), recurse, excluded_deps)
+
+
+    def add_object(self, node, recurse = Equal.OnIdentity, excluded_deps = []):
         """Add an object and its underlying node and its links recursively into the graph.
 
         If some dependencies of the node are already in the graph, we should not add
@@ -145,62 +145,62 @@ class ObjectGraph(AbstractDirectedGraph):
         #        ie, if we add a node without a class, we won't know its implicit dependencies
         node = node._node.virtual()
         log.debug('Adding to graph: %s - node: %s' % (self, node))
-        node, nodeClass = unwrapNode(node)
+        node, node_class = unwrap_node(node)
 
-        if nodeClass is None:
+        if node_class is None:
             raise TypeError("Can only add BaseObjects to a graph at the moment...")
 
         # first make sure the node's not already in the graph, using the requested equality comparison
         # TODO: if node is already there, we need to decide what to do with the additional information we have
         #       in the added node dependencies: update missing properties, update all properties (even if already present),
         #       update non-valid properties, ignore new data, etc...
-        excludedProperties = nodeClass.schema._implicit if nodeClass is not None else []
-        log.debug('exclude properties: %s' % excludedProperties)
+        excluded_properties = node_class.schema._implicit if node_class is not None else []
+        log.debug('exclude properties: %s' % excluded_properties)
 
-        gnode = self.findNode(node, recurse, excludedProperties)
+        gnode = self.find_node(node, recurse, excluded_properties)
         if gnode is not None:
-            return wrapNode(gnode, nodeClass)
+            return wrap_node(gnode, node_class)
 
         # if node isn't already in graph, we need to make a copy of it that lives in this graph
 
         # first import any other node this node might depend on
         newprops = []
-        for prop, value, reverseName in reverseLookup(node, nodeClass):
+        for prop, value, reverse_name in reverse_lookup(node, node_class):
             #if (isinstance(value, AbstractNode) or
             #    (isinstance(value, list) and isinstance(value[0], AbstractNode))):
             if isinstance(value, types.GeneratorType):
                 # use only the explicit properties here
-                if prop not in excludedProperties and value not in excludedDeps:
-                    importedNodes = []
+                if prop not in excluded_properties and value not in excluded_deps:
+                    imported_nodes = []
                     for v in value:
                         log.debug('Importing dependency %s: %s' % (prop, v))
-                        importedNodes.append(self.addObject(wrapNode(v, nodeClass.schema.get(prop)),
-                                                            recurse,
-                                                            excludedDeps = excludedDeps + [node])._node)
-                    newprops.append((prop, importedNodes, reverseName))
+                        imported_nodes.append(self.add_object(wrap_node(v, node_class.schema.get(prop)),
+                                                              recurse,
+                                                              excluded_deps = excluded_deps + [node])._node)
+                    newprops.append((prop, imported_nodes, reverse_name))
             else:
-                newprops.append((prop, value, reverseName))
+                newprops.append((prop, value, reverse_name))
 
         # actually create the node
-        result = self.createNode(newprops, _classes = node._classes)
+        result = self.create_node(newprops, _classes = node._classes)
 
-        return wrapNode(result, nodeClass)
+        return wrap_node(result, node_class)
 
 
     def __iadd__(self, node):
         """Should allow node, but also list of nodes, graph, ..."""
         if isinstance(node, list):
             for n in node:
-                self.addObject(n)
+                self.add_object(n)
         else:
-            self.addObject(node)
+            self.add_object(node)
 
         return self
 
 
     ### Search methods
 
-    def findNode(self, node, cmp = Equal.OnIdentity, excludeProperties = []):
+    def find_node(self, node, cmp = Equal.OnIdentity, exclude_properties = []):
         """Return a node in the graph that is equal to the given one using the specified comparison type.
 
         Return None if not found."""
@@ -212,21 +212,21 @@ class ObjectGraph(AbstractDirectedGraph):
 
         elif cmp == Equal.OnValue:
             for n in self.nodes():
-                if node.sameProperties(n, exclude = excludeProperties):
+                if node.same_properties(n, exclude = exclude_properties):
                     log.debug('%s already in graph %s (value)...' % (node, self))
                     return n
 
         elif cmp == Equal.OnLiterals:
             for n in self.nodes():
-                if node.sameProperties(n, n.literalKeys(), exclude = excludeProperties):
+                if node.same_properties(n, n.literal_keys(), exclude = exclude_properties):
                     log.debug('%s already in graph %s (literals)...' % (node, self))
                     return n
 
         elif cmp == Equal.OnUnique:
             obj = node.virtual()
-            props = list(set(obj.explicitKeys()) - set(excludeProperties))
+            props = list(set(obj.explicit_keys()) - set(exclude_properties))
             for n in self.nodes():
-                if node.sameProperties(n, props):
+                if node.same_properties(n, props):
                     log.debug('%s already in graph %s (unique)...' % (node, self))
                     return n
 
@@ -235,7 +235,7 @@ class ObjectGraph(AbstractDirectedGraph):
 
         return None
 
-    def findAll(self, type = None, validNode = lambda x: True, **kwargs):
+    def find_all(self, type = None, valid_node = lambda x: True, **kwargs):
         """This method returns a list of the objects of the given type in this graph for which
         the cond function returns True (or sth that evaluates to True).
         It will also only keep those objects that have properties which match the given keyword
@@ -252,24 +252,24 @@ class ObjectGraph(AbstractDirectedGraph):
         If no match is found, it returns an empty list.
 
         examples:
-          g.findAll(type = Movie)
-          g.findAll(Episode, lambda x: x.season = 2)
-          g.findall(Movie, lambda m: m.releaseYear > 2000)
-          g.findAll(Person, role_movie_title = 'The Dark Knight')
-          g.findAll(Character, isCharacterOf_movie_title = 'Fear and loathing.*', regexp = True)
+          g.find_all(type = Movie)
+          g.find_all(Episode, lambda x: x.season = 2)
+          g.find_all(Movie, lambda m: m.releaseYear > 2000)
+          g.find_all(Person, role_movie_title = 'The Dark Knight')
+          g.find_all(Character, isCharacterOf_movie_title = 'Fear and loathing.*', regexp = True)
         """
-        return list(self._findAll(type, validNode, **kwargs))
+        return list(self._find_all(type, valid_node, **kwargs))
 
 
-    def _findAll(self, type = None, validNode = lambda x: True, **kwargs):
+    def _find_all(self, type = None, valid_node = lambda x: True, **kwargs):
         """Implementation of findAll that returns a generator."""
         if isinstance(type, basestring):
-            type = ontology.getClass(type)
+            type = ontology.get_class(type)
 
-        for node in self.nodesFromClass(type) if type else self.nodes():
+        for node in self.nodes_from_class(type) if type else self.nodes():
             # TODO: should this go before or after the properties checking? Which is faster in general?
             try:
-                if not validNode(node):
+                if not valid_node(node):
                     continue
             except:
                 continue
@@ -281,7 +281,7 @@ class ObjectGraph(AbstractDirectedGraph):
                     if isinstance(value, BaseObject):
                         value = value._node
 
-                    if node.getChainedProperties(prop.split('_')) != value:
+                    if node.get_chained_properties(prop.split('_')) != value:
                         valid = False
                         break
                 except AttributeError:
@@ -297,17 +297,17 @@ class ObjectGraph(AbstractDirectedGraph):
                 yield node
 
 
-    def findOne(self, type = None, validNode = lambda x: True, **kwargs):
+    def find_one(self, type = None, valid_node = lambda x: True, **kwargs):
         """Returns a single result. see findAll for description.
         Raises an exception if no result was found."""
         # NB: as _findAll is a generator, this should be fairly optimized
-        result = self._findAll(type, validNode, **kwargs)
+        result = self._find_all(type, valid_node, **kwargs)
         try:
             return result.next()
         except StopIteration:
             raise ValueError('Could not find given %s with props %s' % (type.__name__, kwargs))
 
-    def findOrCreate(self, type, **kwargs):
+    def find_or_create(self, type, **kwargs):
         '''This method returns the first object in this graph which has the specified type and
         properties which match the given keyword args dictionary.
         If no match is found, it creates a new object with the keyword args, inserts it in the
@@ -315,6 +315,6 @@ class ObjectGraph(AbstractDirectedGraph):
 
         example: g.findOrCreate(Series, title = 'Arrested Development')'''
         try:
-            return self.findOne(type, **kwargs)
+            return self.find_one(type, **kwargs)
         except ValueError:
             return type(graph = self, **kwargs)

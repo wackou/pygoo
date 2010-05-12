@@ -45,37 +45,37 @@ class Schema(dict):
 
 # dict of name to ontologies
 # ontologies are (_classes, class variables)
-_savedOntologies = {}
+_saved_ontologies = {}
 
-def revalidateGraphs():
+def revalidate_graphs():
     """revalidate all ObjectNodes in all registered Graphs."""
     for g in _graphs.values():
-        g.revalidateObjects()
+        g.revalidate_objects()
 
-def saveCurrentOntology(name):
+def save_current_ontology(name):
     # we need to make a copy of the elements here, and of the properties explicitly
     # as when we change the ontology, we modify references to always the same class,
     # not a copy of it
     classes = dict(_classes)
-    classvars = [ (cls, cls.classVariables()) for cls in _classes.values() ]
-    _savedOntologies[name] = (classes, classvars)
+    classvars = [ (cls, cls.class_variables()) for cls in _classes.values() ]
+    _saved_ontologies[name] = (classes, classvars)
 
-def reloadSavedOntology(name):
+def reload_saved_ontology(name):
     global _classes
 
     try:
-        classes, classvars = _savedOntologies[name]
+        classes, classvars = _saved_ontologies[name]
     except KeyError:
         raise KeyError("Could not find '%s' ontology" % name)
 
     _classes = dict(classes)
     for cls, cvars in classvars:
-        cls.setClassVariables(cvars)
+        cls.set_class_variables(cvars)
 
-    revalidateGraphs()
+    revalidate_graphs()
 
 def clear():
-    reloadSavedOntology('origin')
+    reload_saved_ontology('origin')
     # FIXME: this still leaks memory, as the nodes in a graph have a ref to it
     #_graphs = weakref.WeakValueDictionary()
 
@@ -84,21 +84,21 @@ def subclasses(cls):
     '''Returns the given class and all of its subclasses'''
     return (c for c in _classes.values() if issubclass(c, cls))
 
-def parentClasses(cls):
+def parent_classes(cls):
     '''Returns the given class and all of its parent classes (BaseObject being the topmost class).'''
     return (c for c in _classes.values() if issubclass(cls, c))
 
-def validateClassDefinition(cls, attrs):
+def validate_class_definition(cls, attrs):
     BaseObject = _classes['BaseObject']
 
-    validTypes = validLiteralTypes + [ BaseObject ]
+    valid_types = validLiteralTypes + [ BaseObject ]
 
     if not issubclass(cls, BaseObject):
         raise TypeError, "'%s' needs to derive from ontology.BaseObject or one of its subclasses" % cls.__name__
 
-    parent = cls.parentClass()
+    parent = cls.parent_class()
 
-    def checkPresent(cls, var, ctype, defaultValue = True):
+    def check_present(cls, var, ctype, default_value = True):
         if not isinstance(ctype, tuple):
             ctype = (ctype,)
 
@@ -109,7 +109,7 @@ def validateClassDefinition(cls, attrs):
 
         #if not explicitAttribute(cls, var):
         if var not in attrs:
-            if defaultValue:
+            if default_value:
                 # if not explicitly in subclass definition, create a default one
                 setattr(cls, var, ctype[0]())
             else:
@@ -122,19 +122,19 @@ def validateClassDefinition(cls, attrs):
         setattr(cls, var, ctype[0](value))
 
 
-    def checkSchemaSubset(cls, var, defaultValue = True):
-        checkPresent(cls, var, (set, list), defaultValue)
+    def check_schema_subset(cls, var, default_value = True):
+        check_present(cls, var, (set, list), default_value)
         for prop in getattr(cls, var):
             if not prop in cls.schema:
                 raise TypeError("In '%s': when defining '%s', you used the '%s' variable, which is not defined in the schema" % (cls.__name__, var, prop))
 
-    def checkParentSuperset(cls, var):
-        if not set(getattr(cls, var)).issuperset(set(getattr(cls.parentClass(), var))):
+    def check_parent_superset(cls, var):
+        if not set(getattr(cls, var)).issuperset(set(getattr(cls.parent_class(), var))):
             raise TypeError("In '%s': the '%s' variable needs to be a superset of its class parent's one" % (cls.__name__, var))
 
 
     # validate that the schema is correctly defined
-    checkPresent(cls, 'schema', dict, defaultValue =  False)
+    check_present(cls, 'schema', dict, default_value =  False)
 
     # inherit schema from parent class
     schema = Schema(parent.schema) # make a copy of parent's schema
@@ -144,59 +144,59 @@ def validateClassDefinition(cls, attrs):
 
     # validate attribute types as defined in schema
     for name, ctype in cls.schema.items():
-        if not isinstance(name, str) or not any(issubclass(ctype, dtype) for dtype in validTypes):
+        if not isinstance(name, str) or not any(issubclass(ctype, dtype) for dtype in valid_types):
             raise TypeError("In '%s': the schema should be a dict of 'str' to either one of those accepted types (or a subclass of them): %s'" % (cls.__name__, ', '.join("'%s'" % c.__name__ for c in validTypes)))
 
 
     # all the properties defined as subclasses of BaseObject need to have an
     # associated reverseLookup entry
-    checkPresent(cls, 'reverseLookup', dict)
-    origReverseLookup = cls.reverseLookup if 'reverseLookup' in attrs else {}
+    check_present(cls, 'reverse_lookup', dict)
+    orig_reverse_lookup = cls.reverse_lookup if 'reverse_lookup' in attrs else {}
 
     # inherit reverseLookup from parent
-    rlookup = dict(parent.reverseLookup)
-    rlookup.update(cls.reverseLookup)
-    cls.reverseLookup = rlookup
+    rlookup = dict(parent.reverse_lookup)
+    rlookup.update(cls.reverse_lookup)
+    cls.reverse_lookup = rlookup
 
     # check that we have reverseLookup names for all needed properties
-    objectProps = [ name for name, ctype in cls.schema.items() if issubclass(ctype, BaseObject) and name not in cls.schema._implicit ]
-    reverseLookup = [ prop for prop in cls.reverseLookup.keys() if prop not in cls.schema._implicit ]
+    object_props = [ name for name, ctype in cls.schema.items() if issubclass(ctype, BaseObject) and name not in cls.schema._implicit ]
+    reverse_lookup = [ prop for prop in cls.reverse_lookup.keys() if prop not in cls.schema._implicit ]
 
-    diff = set(reverseLookup).symmetric_difference(set(objectProps))
+    diff = set(reverse_lookup).symmetric_difference(set(object_props))
     if diff:
         raise TypeError("In '%s': you should define exactly one reverseLookup name for each property in your schema that is a subclass of BaseObject, different ones: %s" % (cls.__name__, ', '.join("'%s'" % c for c in diff)))
 
     # directly update the schema for other classes where needed
     # TODO: make sure we don't overwrite anything (should have been done in the validateClassDefinition, right?)
-    for prop, rprop in origReverseLookup.items():
+    for prop, rprop in orig_reverse_lookup.items():
         for c in subclasses(cls.schema[prop]):
             c.schema._implicit.add(rprop)
             c.schema[rprop] = cls
-            c.reverseLookup[rprop] = prop
+            c.reverse_lookup[rprop] = prop
 
 
     # check that the other variables are correctly defined
-    checkSchemaSubset(cls, 'valid', defaultValue = False)
-    checkParentSuperset(cls, 'valid')
+    check_schema_subset(cls, 'valid', default_value = False)
+    check_parent_superset(cls, 'valid')
 
-    checkSchemaSubset(cls, 'unique')
-    checkParentSuperset(cls, 'unique')
+    check_schema_subset(cls, 'unique')
+    check_parent_superset(cls, 'unique')
 
-    checkSchemaSubset(cls, 'order')
+    check_schema_subset(cls, 'order')
     # TODO: validate converters
 
 
-def printClass(cls):
+def print_class(cls):
     print '*'*100
     print 'class: %s' % cls.__name__
-    print 'parent: %s' % cls.parentClass().__name__
+    print 'parent: %s' % cls.parent_class().__name__
     print 'schema', cls.schema
     print 'implicit', cls.schema._implicit
-    print 'rlookup', cls.reverseLookup
+    print 'rlookup', cls.reverse_lookup
     print '*'*100
 
 
-def displayOntology():
+def display_ontology():
     import cPickle as pickle
     import tempfile
     import subprocess
@@ -219,7 +219,7 @@ def displayOntology():
         label += '<BR/>'.join(attrs)
         dg += [ 'node_%s [shape=polygon,sides=4,label=<%s>];' % (cname, label) ]
 
-        dg += [ 'node_%s -> node_%s;' % (cname, cls.parentClass().__name__) ]
+        dg += [ 'node_%s -> node_%s;' % (cname, cls.parent_class().__name__) ]
 
 
     dg += [ '}' ]
@@ -233,7 +233,7 @@ def register(cls, attrs):
     if cls.__name__ == 'BaseObject':
         _classes['BaseObject'] = cls
         # save this as a default ontology, it might be useful
-        saveCurrentOntology('origin')
+        save_current_ontology('origin')
         return
 
     if cls.__name__ in _classes:
@@ -244,39 +244,39 @@ def register(cls, attrs):
         log.warning('Found previous definition of class %s. Ignoring new definition...' % cls.__name__)
         return
 
-    validateClassDefinition(cls, attrs)
+    validate_class_definition(cls, attrs)
 
     _classes[cls.__name__] = cls
 
-    revalidateGraphs()
+    revalidate_graphs()
 
     #displayOntology()
 
 
-def registerGraph(graph):
+def register_graph(graph):
     _graphs[id(graph)] = graph
 
-def getClass(className):
+def get_class(class_name):
     """Returns the ObjectNode class object given its name."""
     try:
-        return _classes[className]
+        return _classes[class_name]
     except:
-        raise ValueError, 'Class "%s" has not been registered with the OntologyManager' % className
+        raise ValueError, 'Class "%s" has not been registered with the OntologyManager' % class_name
 
-def classNames():
+def class_names():
     return _classes.keys()
 
-def importClass(cls):
-    sys._getframe(1).f_globals[cls] = getClass(cls)
+def import_class(cls):
+    sys._getframe(1).f_globals[cls] = get_class(cls)
 
-def importClasses(classes):
+def import_classes(classes):
     """Import the given classes in the caller's global variables namespace."""
     for cls in classes:
-        sys._getframe(1).f_globals[cls] = getClass(cls)
+        sys._getframe(1).f_globals[cls] = get_class(cls)
 
-def importAllClasses():
-    importClasses(classNames())
+def import_all_classes():
+    import_classes(class_names())
 
-def importOntology(name):
-    reloadSavedOntology(name)
-    importAllClasses()
+def import_ontology(name):
+    reload_saved_ontology(name)
+    import_all_classes()

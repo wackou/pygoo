@@ -13,7 +13,7 @@ graph = None
 transaction = None
 
 
-def defaultJVM():
+def default_jvm():
     # make an educated guess on debian-based system
     java = subprocess.Popen([ 'ls', '-l', '/etc/alternatives/java' ], stdout = subprocess.PIPE).stdout.read().strip().split()[-1]
     java_rootdir = '/'.join(java.split('/')[:-2])
@@ -47,7 +47,7 @@ def open(dbpath):
     transaction = graph.transaction
 
 
-def deleteAllData():
+def delete_all_data():
     global dirname
     dbpath = dirname
 

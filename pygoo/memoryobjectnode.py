@@ -18,19 +18,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from abstractnode import AbstractNode
-from objectnode import ObjectNode
-from utils import tolist, toresult, isLiteral, toIterator
-import ontology
+from pygoo.abstractnode import AbstractNode
+from pygoo.objectnode import ObjectNode
+from pygoo.utils import tolist, toresult, is_literal, to_iterator
+from pygoo import ontology
 import logging
 
 log = logging.getLogger('pygoo.MemoryObjectNode')
 
 class MemoryNode(AbstractNode):
 
-    def __init__(self, graph, props = [], _classes = set()):
-        # NB: this should go before super().__init__() because we need self._props and
-        #     self._classes to exist before we can set attributes
+    def __init__(self, graph, props = list(), _classes = set()):
+        # NB: this should go before super().__init__() because we need
+        #     self._props and self._classes to exist before we can set
+        #     attributes
         self._props = {}
         self._classes = set(_classes)
         super(MemoryNode, self).__init__(graph, props)
@@ -55,13 +56,13 @@ class MemoryNode(AbstractNode):
 
     ### Ontology methods
 
-    def addClass(self, cls):
+    def add_class(self, cls):
         self._classes.add(cls)
 
-    def removeClass(self, cls):
+    def remove_class(self, cls):
         self._classes.remove(cls)
 
-    def clearClasses(self):
+    def clear_classes(self):
         self._classes = set()
 
     def classes(self):
@@ -74,71 +75,73 @@ class MemoryNode(AbstractNode):
 
     ### Accessing literal properties
 
-    def getLiteral(self, name):
+    def get_literal(self, name):
         # if name is not a literal, we need to throw an exception
         result = self._props[name]
-        if isLiteral(result):
+        if is_literal(result):
             return result
         raise AttributeError
 
-    def setLiteral(self, name, value):
+    def set_literal(self, name, value):
         self._props[name] = value
 
-    def literalKeys(self):
-        return (k for k, v in self._props.items() if isLiteral(v))
+    def literal_keys(self):
+        return (k for k, v in self._props.items() if is_literal(v))
 
-    def literalValues(self):
-        return (v for v in self._props.values() if isLiteral(v))
+    def literal_values(self):
+        return (v for v in self._props.values() if is_literal(v))
 
-    def literalItems(self):
-        return ((k, v) for k, v in self._props.items() if isLiteral(v))
+    def literal_items(self):
+        return ((k, v) for k, v in self._props.items() if is_literal(v))
 
 
 
     ### Accessing edge properties
 
-    def addDirectedEdge(self, name, otherNode):
+    def add_directed_edge(self, name, other_node):
         # otherNode should always be a valid node
-        nodeList = tolist(self._props.get(name))
-        nodeList.append(otherNode)
-        self._props[name] = toresult(nodeList)
+        node_list = tolist(self._props.get(name))
+        node_list.append(other_node)
+        self._props[name] = toresult(node_list)
 
-    def removeDirectedEdge(self, name, otherNode):
-        # otherNode should always be a valid node
-        nodeList = tolist(self._props.get(name))
-        nodeList.remove(otherNode)
-        self._props[name] = toresult(nodeList)
+    def remove_directed_edge(self, name, other_node):
+        # other_node should always be a valid node
+        node_list = tolist(self._props.get(name))
+        node_list.remove(other_node)
+        self._props[name] = toresult(node_list)
 
         # TODO: we should have this, right?
         if self._props[name] is None:
             del self._props[name]
 
 
-    def outgoingEdgeEndpoints(self, name = None):
-        if name is None: return self._allOutgoingEdgeEndpoints()
-        else:            return self._outgoingEdgeEndpoints(name)
+    def outgoing_edge_endpoints(self, name = None):
+        if name is None:
+            return self._all_outgoing_edge_endpoints()
+        else:
+            return self._outgoing_edge_endpoints(name)
 
-    def _outgoingEdgeEndpoints(self, name):
+    def _outgoing_edge_endpoints(self, name):
         # if name is not an edge, we need to throw an exception
         result = self._props[name]
-        if not isLiteral(result):
-            return toIterator(result)
+        if not is_literal(result):
+            return to_iterator(result)
         raise AttributeError
 
-    def _allOutgoingEdgeEndpoints(self):
-        for prop, eps in self.edgeItems():
+    def _all_outgoing_edge_endpoints(self):
+        for prop, eps in self.edge_items():
             for ep in eps:
                 yield ep
 
 
-    def edgeKeys(self):
-        return (k for k, v in self._props.items() if not isLiteral(v))
+    def edge_keys(self):
+        return (k for k, v in self._props.items() if not is_literal(v))
 
-    def edgeValues(self):
-        return (toIterator(v) for v in self._props.values() if not isLiteral(v))
+    def edge_values(self):
+        return (to_iterator(v) for v in self._props.values() if not is_literal(v))
 
-    def edgeItems(self):
-        return ((k, toIterator(v)) for k, v in self._props.items() if not isLiteral(v))
+    def edge_items(self):
+        return ((k, to_iterator(v)) for k, v in self._props.items() if not is_literal(v))
 
 
     # The next methods are overriden for efficiency
@@ -158,9 +161,9 @@ class MemoryNode(AbstractNode):
     #def items(self):
     #    return self._props.items()
 
-    def updateValidClasses(self):
+    def update_valid_classes(self):
         if self.graph()._dynamic:
-            self._classes = set(cls for cls in ontology._classes.values() if self.isValidInstance(cls))
+            self._classes = set(cls for cls in ontology._classes.values() if self.is_valid_instance(cls))
         else:
             # no need to do anything
             pass

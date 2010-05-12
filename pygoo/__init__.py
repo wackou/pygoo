@@ -18,8 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from memoryobjectgraph import MemoryGraph, MemoryObjectGraph
-from objectgraph import Equal
-from baseobject import BaseObject
-from utils import tolist, toresult
-import ontology
+from pygoo.memoryobjectgraph import MemoryGraph, MemoryObjectGraph
+from pygoo.objectgraph import Equal
+from pygoo.baseobject import BaseObject
+from pygoo.utils import tolist, toresult

@@ -18,8 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from memoryobjectgraph import MemoryObjectGraph
-from neo4jobjectnode import Neo4jObjectNode
+from pygoo.memoryobjectgraph import MemoryObjectGraph
+from pygoo.neo4jobjectnode import Neo4jObjectNode
 import neo4j
 import neo
 import logging
@@ -34,7 +34,7 @@ class AllNodes(neo4j.Traversal):
     stop = neo4j.STOP_AT_END_OF_GRAPH
     returnable = neo4j.RETURN_ALL_BUT_START_NODE
 
-def allNodes():
+def all_nodes():
     # FIXME: ATM returns neo nodes, not expected Neo4jObjectNodes
     return AllNodes(neo.graph.reference_node)
 
@@ -43,7 +43,7 @@ class Neo4jObjectGraph(MemoryObjectGraph):
     All attribute modifications are immediately synchronized on the data store.
 
     A Neo4jObjectGraph uses PersistentObjectNodes."""
-    _objectNodeClass = Neo4jObjectNode
+    _object_node_class = Neo4jObjectNode
 
     def __init__(self, dbpath):
         MemoryObjectGraph.__init__(self)
@@ -56,30 +56,30 @@ class Neo4jObjectGraph(MemoryObjectGraph):
         """Delete all objects in this graph."""
         MemoryObjectGraph.clear(self)
 
-        neo.deleteAllData()
+        neo.delete_all_data()
 
     def __contains__(self, node):
         """Return whether this graph contains the given node (identity)."""
         # TODO: only works if correctly cached
-        return getNode(node) in self._nodes
+        return get_node(node) in self._nodes
 
 
     def nodes(self):
-        for n in allNodes():
+        for n in all_nodes():
             yield Neo4jObjectNode(neonode = n)
 
 
-    def removeDirectedEdge(self, node, name, otherNode):
-        MemoryObjectGraph.removeDirectedEdge(self, node, name, otherNode)
+    def remove_directed_edge(self, node, name, other_node):
+        MemoryObjectGraph.remove_directed_edge(self, node, name, other_node)
 
         for r in node._neonode.relationships():
-            if r.end == otherNode and r.type == name:
+            if r.end == other_node and r.type == name:
                 r.delete()
                 # return early, which means if we had the same link multiple times,
                 # we only remove one of them. This could be used for doing ref-counting if necessary
                 return
 
-    def addDirectedEdge(self, node, name, otherNode):
-        MemoryObjectGraph.addDirectedEdge(self, node, name, otherNode)
+    def add_directed_edge(self, node, name, other_node):
+        MemoryObjectGraph.add_directed_edge(self, node, name, other_node)
 
-        setattr(node._neonode, name, otherNode._neonode)
+        setattr(node._neonode, name, other_node._neonode)

@@ -18,10 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from abstractnode import AbstractNode
-from baseobject import BaseObject
-from utils import tolist, toresult, isOf, multiIsInstance, isLiteral, toUtf8
-import ontology
+from pygoo.abstractnode import AbstractNode
+from pygoo.baseobject import BaseObject
+from pygoo.utils import tolist, toresult, is_of, multi_is_instance, is_literal
+from pygoo import ontology
 import types
 import weakref
 import logging
@@ -81,19 +81,19 @@ class ObjectNode(AbstractNode):
 
         self.graph = weakref.ref(graph)
 
-        for prop, value, reverseName in props:
-            self.set(prop, value, reverseName, validate = False)
+        for prop, value, reverse_name in props:
+            self.set(prop, value, reverse_name, validate = False)
 
-        self.updateValidClasses()
+        self.update_valid_classes()
 
 
-    def isValidInstance(self, cls):
+    def is_valid_instance(self, cls):
         """Returns whether this node can be considered a valid instance of a class given its current properties.
 
         This method doesn't use the cached value, but does the actual checking of whether there is a match."""
-        return self.hasValidProperties(cls, cls.valid)
+        return self.has_valid_properties(cls, cls.valid)
 
-    def hasValidProperties(self, cls, props):
+    def has_valid_properties(self, cls, props):
         for prop in props:
             value = self.get(prop)
 
@@ -110,7 +110,7 @@ class ObjectNode(AbstractNode):
         return True
 
 
-    def invalidProperties(self, cls):
+    def invalid_properties(self, cls):
         invalid = []
         for prop in cls.valid:
             if prop not in self:
@@ -121,27 +121,27 @@ class ObjectNode(AbstractNode):
             if isinstance(getattr(self, prop), types.GeneratorType):
                 continue
 
-            if not multiIsInstance(getattr(self, prop), cls.schema[prop]):
+            if not multi_is_instance(getattr(self, prop), cls.schema[prop]):
                 invalid.append("property '%s' is of type '%s', but should be of type '%s'" %
                                (prop, type(getattr(self, prop)).__name__, cls.schema[prop].__name__))
 
         return '\n'.join(invalid)
 
 
-    def updateValidClasses(self):
+    def update_valid_classes(self):
         """Revalidate all the classes for this node."""
         if self.graph()._dynamic:
-            self.clearClasses()
+            self.clear_classes()
             for cls in ontology._classes.values():
-                if self.isValidInstance(cls):
-                    self.addClass(cls)
+                if self.is_valid_instance(cls):
+                    self.add_class(cls)
         else:
             # if we have static inheritance, we don't want to do anything here
             pass
 
-        log.debug('valid classes for %s:\n  %s' % (self.toString(), [ cls.__name__ for cls in self._classes ]))
+        log.debug('valid classes for %s:\n  %s' % (self.to_string(), [ cls.__name__ for cls in self._classes ]))
 
-    def virtualClass(self):
+    def virtual_class(self):
         """Return the most specialized class that this node is an instance of."""
         cls = BaseObject
         for c in self.classes():
@@ -151,26 +151,26 @@ class ObjectNode(AbstractNode):
 
     def virtual(self):
         """Return an instance of the most specialized class that this node is an instance of."""
-        return self.virtualClass()(self)
+        return self.virtual_class()(self)
 
     ### Container methods
 
     def keys(self):
-        for k in self.literalKeys():
+        for k in self.literal_keys():
             yield k
-        for k in self.edgeKeys():
+        for k in self.edge_keys():
             yield k
 
     def values(self):
-        for v in self.literalValues():
+        for v in self.literal_values():
             yield v
-        for v in self.edgeValues():
+        for v in self.edge_values():
             yield v
 
     def items(self):
-        for i in self.literalItems():
+        for i in self.literal_items():
             yield i
-        for i in self.edgeItems():
+        for i in self.edge_items():
             yield i
 
     def __contains__(self, name):
@@ -192,10 +192,10 @@ class ObjectNode(AbstractNode):
 
     def __getattr__(self, name):
         try:
-            return self.getLiteral(name)
+            return self.get_literal(name)
         except:
             try:
-                return self.outgoingEdgeEndpoints(name) # this should be an iterable over the pointed nodes
+                return self.outgoing_edge_endpoints(name) # this should be an iterable over the pointed nodes
             except:
                 raise AttributeError(name)
 
@@ -208,13 +208,13 @@ class ObjectNode(AbstractNode):
         except AttributeError:
             return None
 
-    def getChainedProperties(self, propList):
+    def get_chained_properties(self, prop_list):
         """Given a list of successive chained properties, returns the final value.
         e.g.: Movie('2001').getChainedProperties([ 'director', 'firstName' ]) == 'Stanley'
 
         In case some property does not exist, it will raise an AttributeError."""
         result = self
-        for prop in propList:
+        for prop in prop_list:
             result = result.get(prop)
             if isinstance(result, types.GeneratorType):
                 # FIXME: this will fail if it branches before the last property
@@ -230,57 +230,57 @@ class ObjectNode(AbstractNode):
         else:
             self.set(name, value)
 
-    def set(self, name, value, reverseName = None, validate = True):
+    def set(self, name, value, reverse_name = None, validate = True):
         """Sets the property name to the given value.
 
         If value is an ObjectNode, we're actually setting a link between them two, so we use reverseName as the
         name of the link when followed in the other direction.
         If reverseName is not given, a default of 'isNameOf' (using the given name) will be used."""
 
-        if multiIsInstance(value, AbstractNode):
-            if reverseName is None:
-                reverseName = isOf(name)
+        if multi_is_instance(value, AbstractNode):
+            if reverse_name is None:
+                reverse_name = is_of(name)
 
-            self.setLink(name, value, reverseName)
+            self.set_link(name, value, reverse_name)
 
-        elif isLiteral(value):
-            self.setLiteral(name, value)
+        elif is_literal(value):
+            self.set_literal(name, value)
 
         else:
             raise TypeError("Trying to set property '%s' of %s to '%s', but it is not of a supported type (literal or object node): %s" % (name, self, value, type(value).__name__))
 
         # update the cache of valid classes
         if validate:
-            self.updateValidClasses()
+            self.update_valid_classes()
 
 
 
-    def append(self, name, value, reverseName = None, validate = True):
-        if multiIsInstance(value, AbstractNode):
-            if reverseName is None:
-                reverseName = isOf(name)
+    def append(self, name, value, reverse_name = None, validate = True):
+        if multi_is_instance(value, AbstractNode):
+            if reverse_name is None:
+                reverse_name = is_of(name)
 
-            self.addLink(name, value, reverseName)
+            self.add_link(name, value, reverse_name)
 
         else:
             raise TypeError("Trying to append to property '%s' of %s: '%s', but it is not of a supported type (literal or object node): %s" % (name, self, value, type(value).__name__))
 
         # update the cache of valid classes
         if validate:
-            self.updateValidClasses()
+            self.update_valid_classes()
 
 
-    def addLink(self, name, otherNode, reverseName):
+    def add_link(self, name, other_node, reverse_name):
         g = self.graph()
 
-        if isinstance(otherNode, list) or isinstance(otherNode, types.GeneratorType):
-            for n in otherNode:
-                g.addLink(self, name, n, reverseName)
+        if isinstance(other_node, list) or isinstance(other_node, types.GeneratorType):
+            for n in other_node:
+                g.add_link(self, name, n, reverse_name)
         else:
-            g.addLink(self, name, otherNode, reverseName)
+            g.add_link(self, name, other_node, reverse_name)
 
 
-    def setLink(self, name, otherNode, reverseName):
+    def set_link(self, name, other_node, reverse_name):
         """Can assume that otherNode is always an object node or an iterable over them."""
         # need to check for whether otherNode is an iterable
         #if self._graph != otherNode._graph:
@@ -292,10 +292,10 @@ class ObjectNode(AbstractNode):
         # Note: we need to wrap the generator into a list here because it looks like otherwise
         # the removeLink() call messes up with it
         for n in list(self.get(name) or []): # NB: 'or []' because if the property doesn't exist yet, self.get() returns None
-            g.removeLink(self, name, n, reverseName)
+            g.remove_link(self, name, n, reverse_name)
 
         # then add the new link(s)
-        self.addLink(name, otherNode, reverseName)
+        self.add_link(name, other_node, reverse_name)
 
 
 
@@ -305,9 +305,9 @@ class ObjectNode(AbstractNode):
         for name, value in props.items():
             self.set(name, value, validate = False)
 
-        self.updateValidClasses()
+        self.update_valid_classes()
 
-    def updateNew(self, other):
+    def update_new(self, other):
         """Update this ObjectNode properties with the only other ones it doesn't have yet."""
         raise NotImplementedError
 
@@ -315,24 +315,24 @@ class ObjectNode(AbstractNode):
     ### String methods
 
     def __str__(self):
-        return self.toString().encode('utf-8')
+        return self.to_string().encode('utf-8')
 
     def __unicode__(self):
-        return self.toString()
+        return self.to_string()
 
     def __repr__(self):
         return str(self)
 
 
-    def toString(self, cls = None, default = None):
+    def to_string(self, cls = None, default = None):
         # TODO: smarter stringize that guesses the class, should it always be there?
-        cls = self.virtualClass()
+        cls = self.virtual_class()
 
         if cls is None:
             # most likely called from a node, but anyway we can't infer anything on the links so just display
             # them as anonymous ObjectNodes
             cls = self.__class__
-            props = [ (prop, [ cls.__name__ ] * len(tolist(value))) if multiIsInstance(value, ObjectNode) else (prop, unicode(value)) for prop, value in self.items() ]
+            props = [ (prop, [ cls.__name__ ] * len(tolist(value))) if multi_is_instance(value, ObjectNode) else (prop, unicode(value)) for prop, value in self.items() ]
 
         else:
             props = []
@@ -340,7 +340,7 @@ class ObjectNode(AbstractNode):
                 if prop in cls.schema._implicit:
                     continue
                 elif isinstance(value, types.GeneratorType):
-                    props.append((prop, unicode(toresult([ v.toString(cls = cls.schema.get(prop) or default) for v in value ]))))
+                    props.append((prop, unicode(toresult([ v.to_string(cls = cls.schema.get(prop) or default) for v in value ]))))
                 else:
                     props.append((prop, unicode(value)))
 

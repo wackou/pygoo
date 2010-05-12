@@ -31,4 +31,4 @@ logging.getLogger('pygoo').setLevel(logging.WARNING)
 
 # before starting any tests, save pygoo's media ontology in case we mess with it and need it again later
 from mediaontology import *
-ontology.saveCurrentOntology('media')
+ontology.save_current_ontology('media')

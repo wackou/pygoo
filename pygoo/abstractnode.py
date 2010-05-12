@@ -72,15 +72,15 @@ class AbstractNode(object):
     ###       as part of the API as this is something which is used a lot and benefits
     ###       a lot from being optimized, which can be more easily done in the implementation
 
-    def addClass(self, cls):
+    def add_class(self, cls):
         """Add the given class to the list of valid classes for this node."""
         raise NotImplementedError
 
-    def removeClass(self, cls):
+    def remove_class(self, cls):
         """Remove the given class from the list of valid classes for this node."""
         raise NotImplementedError
 
-    def clearClasses(self):
+    def clear_classes(self):
         """Clears the current list of valid classes."""
         raise NotImplementedError
 
@@ -94,49 +94,49 @@ class AbstractNode(object):
 
     ### Methods related to getting / setting literal properties
 
-    def getLiteral(self, name):
+    def get_literal(self, name):
         raise NotImplementedError
 
-    def setLiteral(self, name, value):
+    def set_literal(self, name, value):
         """Need to be implemented by implementation subclass.
         Can assume that literal is always one of the valid literal types."""
         raise NotImplementedError
 
-    def literalKeys(self):
+    def literal_keys(self):
         # TODO: should return an iterator
         raise NotImplementedError
 
-    def literalValues(self):
+    def literal_values(self):
         raise NotImplementedError
 
-    def literalItems(self):
+    def literal_items(self):
         raise NotImplementedError
 
 
     ### Methods related to getting / setting edges (edge properties that point to other nodes)
 
-    def addDirectedEdge(self, name, otherNode):
+    def add_directed_edge(self, name, other_node):
         raise NotImplementedError
 
-    def removeDirectedEdge(self, name, otherNode):
+    def remove_directed_edge(self, name, other_node):
         raise NotImplementedError
 
-    def outgoingEdgeEndpoints(self, name = None):
+    def outgoing_edge_endpoints(self, name = None):
         """Return all the nodes which this node points to with the given edge type.
         If name is None, return all outgoing edge points."""
         # Note: it is *imperative* that this function return a generator and not just any iterable over the values
         raise NotImplementedError
 
-    def edgeKeys(self):
+    def edge_keys(self):
         # NB: this should return an iterator
         raise NotImplementedError
 
-    def edgeValues(self):
+    def edge_values(self):
         # NB: this should return an iterator
         # Note: it is *imperative* that this function return a generator for each value and not just any iterable over the values
         raise NotImplementedError
 
-    def edgeItems(self):
+    def edge_items(self):
         # NB: this should return an iterator
         # Note: it is *imperative* that this function return a generator for each value and not just any iterable over the values
         raise NotImplementedError
@@ -144,7 +144,7 @@ class AbstractNode(object):
 
     ### Additional utility methods
 
-    def sameProperties(self, other, props = None, exclude = []):
+    def same_properties(self, other, props = None, exclude = []):
         # NB: sameValidProperties and sameUniqueProperties should be defined in BaseObject
         # TODO: this can surely be optimized
         if props is None:
@@ -171,11 +171,11 @@ class AbstractNode(object):
 
         return True
 
-    def unlinkAll(self):
-        for name, nodes in self.edgeItems():
+    def unlink_all(self):
+        for name, nodes in self.edge_items():
             for n in nodes:
-                self.removeDirectedEdge(name, n)
-                for oname, onodes in n.edgeItems():
+                self.remove_directed_edge(name, n)
+                for oname, onodes in n.edge_items():
                     for n2 in onodes:
                         if n2 == self:
-                            n.removeDirectedEdge(oname, self)
+                            n.remove_directed_edge(oname, self)

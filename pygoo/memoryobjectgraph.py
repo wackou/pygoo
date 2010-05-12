@@ -18,17 +18,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from objectnode import ObjectNode
-from abstractdirectedgraph import AbstractDirectedGraph
-from memoryobjectnode import MemoryNode, MemoryObjectNode
-from objectgraph import ObjectGraph
+from pygoo.objectnode import ObjectNode
+from pygoo.abstractdirectedgraph import AbstractDirectedGraph
+from pygoo.memoryobjectnode import MemoryNode, MemoryObjectNode
+from pygoo.objectgraph import ObjectGraph
 import logging
 
 log = logging.getLogger('pygoo.MemoryObjectGraph')
 
 
 class MemoryGraph(AbstractDirectedGraph):
-    _objectNodeClass = MemoryNode
+    _object_node_class = MemoryNode
 
     def __init__(self, **kwargs):
         super(MemoryGraph, self).__init__(**kwargs)
@@ -37,10 +37,10 @@ class MemoryGraph(AbstractDirectedGraph):
     def clear(self):
         self._nodes.clear()
 
-    def createNode(self, props = [], _classes = set()):
-        return self.__class__._objectNodeClass(self, props, _classes)
+    def create_node(self, props = [], _classes = set()):
+        return self.__class__._object_node_class(self, props, _classes)
 
-    def deleteNode(self, node):
+    def delete_node(self, node):
         node.unlinkAll()
         node.graph = None
         self._nodes.remove(node)
@@ -52,7 +52,7 @@ class MemoryGraph(AbstractDirectedGraph):
         for node in self._nodes:
             yield node
 
-    def nodesFromClass(self, cls):
+    def nodes_from_class(self, cls):
         return (node for node in self._nodes if node.isinstance(cls))
 
     def contains(self, node):
@@ -65,4 +65,4 @@ class MemoryGraph(AbstractDirectedGraph):
         super(MemoryGraph, self).__setstate__(state)
 
 class MemoryObjectGraph(MemoryGraph, ObjectGraph):
-    _objectNodeClass = MemoryObjectNode
+    _object_node_class = MemoryObjectNode

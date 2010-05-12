@@ -19,8 +19,8 @@
 #
 
 from __future__ import with_statement
-from memoryobjectnode import MemoryObjectNode
-from objectnode import ObjectNode
+from pygoo.memoryobjectnode import MemoryObjectNode
+from pygoo.objectnode import ObjectNode
 import neo
 import logging
 
@@ -46,9 +46,9 @@ class Neo4jObjectNode(MemoryObjectNode):
 
         literal = {}
         links = []
-        for prop, value, reverseName in props:
+        for prop, value, reverse_name in props:
             if isinstance(value, ObjectNode):
-                links.append((prop, value, reverseName))
+                links.append((prop, value, reverse_name))
             else:
                 literal[prop] = value
 
@@ -82,11 +82,11 @@ class Neo4jObjectNode(MemoryObjectNode):
         else:
             MemoryObjectNode.__setattr__(self, name, value)
 
-    def getLink(self, name):
+    def get_link(self, name):
         log.debug('getlink:', name)
-        return toResult([ r.end for r in self._neonode.relationships() if r.type == name ])
+        return to_result([ r.end for r in self._neonode.relationships() if r.type == name ])
 
-    def getLiteral(self, name):
+    def get_literal(self, name):
         log.debug('getliteral:', name)
         result = self._neonode[name]
         if isinstance(result, basestring):
@@ -94,8 +94,8 @@ class Neo4jObjectNode(MemoryObjectNode):
 
         return result.value # fix in neo4j.py
 
-    def setLiteral(self, name, value):
-        MemoryObjectNode.setLiteral(self, name, value) # keep in cache
+    def set_literal(self, name, value):
+        MemoryObjectNode.set_literal(self, name, value) # keep in cache
         with neo.transaction:
             self._neonode[name] = value
 

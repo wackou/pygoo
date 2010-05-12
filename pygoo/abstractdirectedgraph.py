@@ -61,10 +61,10 @@ class AbstractDirectedGraph(object):
         """Delete all nodes and links in this graph."""
         raise NotImplementedError
 
-    def createNode(self, props = []):
+    def create_node(self, props = []):
          raise NotImplementedError
 
-    def deleteNode(self, node):
+    def delete_node(self, node):
         """Remove a given node.
 
         strategies for what to do with linked nodes should be configurable, ie:
@@ -76,18 +76,18 @@ class AbstractDirectedGraph(object):
         """Return an iterator on all the nodes in the graph."""
         raise NotImplementedError
 
-    def nodesFromClass(self, cls):
+    def nodes_from_class(self, cls):
         """Return an iterator on the nodes of a given class."""
         raise NotImplementedError
 
 
-    def addDirectedEdge(self, node, name, otherNode):
-        # otherNode should always be a valid node
-        node.addDirectedEdge(name, otherNode)
+    def add_directed_edge(self, node, name, other_node):
+        # other_node should always be a valid node
+        node.add_directed_edge(name, other_node)
 
-    def removeDirectedEdge(self, node, name, otherNode):
-        # otherNode should always be a valid node
-        node.removeDirectedEdge(name, otherNode)
+    def remove_directed_edge(self, node, name, other_node):
+        # other_node should always be a valid node
+        node.remove_directed_edge(name, other_node)
 
     def contains(self, node):
         """Return whether this graph contains the given node.
@@ -105,7 +105,7 @@ class AbstractDirectedGraph(object):
 
     ### Methods related to a graph serialization
 
-    def toNodesAndEdges(self):
+    def to_nodes_and_edges(self):
         nodes = {}
         classes = {}
         rnodes = {}
@@ -113,64 +113,64 @@ class AbstractDirectedGraph(object):
 
         i = 0
         for n in self.nodes():
-            nodes[i] = list(n.literalItems())
+            nodes[i] = list(n.literal_items())
             rnodes[id(n)] = i
             classes[i] = [ cls.__name__ for cls in n._classes ]
             i += 1
 
         for n in self.nodes():
-            for prop, links in n.edgeItems():
-                for otherNode in links:
-                    edges.append((rnodes[id(n)], prop, rnodes[id(otherNode)]))
+            for prop, links in n.edge_items():
+                for other_node in links:
+                    edges.append((rnodes[id(n)], prop, rnodes[id(other_node)]))
 
         return nodes, edges, classes
 
-    def fromNodesAndEdges(self, nodes, edges, classes):
-        import ontology
+    def from_nodes_and_edges(self, nodes, edges, classes):
+        from pygoo import ontology
 
         self.clear()
         idmap = {}
         for _id, node in nodes.items():
-            idmap[_id] = self.createNode(props = ((prop, value, None) for prop, value in node),
-                                         _classes = (ontology.getClass(cls) for cls in classes[_id]))
+            idmap[_id] = self.create_node(props = ((prop, value, None) for prop, value in node),
+                                          _classes = (ontology.get_class(cls) for cls in classes[_id]))
 
-        for node, name, otherNode in edges:
-            idmap[node].addDirectedEdge(name, idmap[otherNode])
+        for node, name, other_node in edges:
+            idmap[node].add_directed_edge(name, idmap[other_node])
 
         # TODO: we need to make sure that the current ontology is the saem as when we saved this graph, otherwise
         #       previously set classes might not be valid anymore, or some subclasses won't be correctly set
         # we need to revalidate explicitly, as we might have classes in our ontolo
-        #self.revalidateObjects()
+        #self.revalidate_objects()
 
 
     def save(self, filename):
         """Saves the graph to the given filename."""
         import cPickle as pickle
-        pickle.dump(self.toNodesAndEdges(), open(filename, 'w'))
+        pickle.dump(self.to_nodes_and_edges(), open(filename, 'w'))
 
     def load(self, filename):
         import cPickle as pickle
-        self.fromNodesAndEdges(*pickle.load(open(filename)))
+        self.from_nodes_and_edges(*pickle.load(open(filename)))
 
     # __getstate__ and __setstate__ are needed for the cache to be able to work
     def __getstate__(self):
-        return self.toNodesAndEdges()
+        return self.to_nodes_and_edges()
 
     def __setstate__(self, state):
         # FIXME: this doesn't belong here...
         self._dynamic = False
 
-        self.fromNodesAndEdges(*state)
+        self.from_nodes_and_edges(*state)
 
 
     ### Utility methods
 
-    def displayGraph(self, title = ''):
+    def display_graph(self, title = ''):
         import cPickle as pickle
         import tempfile
         import subprocess
 
-        nodes, edges, classes = self.toNodesAndEdges()
+        nodes, edges, classes = self.to_nodes_and_edges()
         fid, filename = tempfile.mkstemp(suffix = '.png')
 
         dg = []
@@ -193,8 +193,8 @@ class AbstractDirectedGraph(object):
             label += '<BR/>'.join([ '%s: %s' % (name, tostring(prop)[:32].encode('utf-8')) for name, prop in n ])
             dg += [ 'node_%d [shape=polygon,sides=4,label=<%s>];' % (_id, label) ]
 
-        for node, name, otherNode in edges:
-            dg += [ 'node_%d -> node_%d [label="%s"];' % (node, otherNode, name) ]
+        for node, name, other_node in edges:
+            dg += [ 'node_%d -> node_%d [label="%s"];' % (node, other_node, name) ]
 
         dg += [ '}' ]
 
