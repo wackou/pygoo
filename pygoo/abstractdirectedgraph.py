@@ -39,45 +39,47 @@ Equal = enum('Equal',
 
 
 class AbstractDirectedGraph(object):
-    """This class describes a basic directed graph, with the addition that the nodes have a special
-    property "classes" which describe which class an node can "morph" into. This mechanism could be
-    built as another basic node property, but it is not for performance reasons.
+    """This class describes a basic directed graph, with the addition that the nodes
+    have a special property "classes" which describe which class a node can "morph"
+    into. This mechanism could be built as another basic node property, but it is
+    not for performance reasons.
 
-    The AbstractDirectedGraph class is the basic interface one needs to implement for providing
-    a backend storage of the data. It is complementary to the AbstractNode interface.
+    The AbstractDirectedGraph class is the basic interface one needs to implement
+    for providing a backend storage of the data. It is complementary to the
+    AbstractNode interface.
 
-    You only need to provide the implementation for this interface, and then an ObjectGraph can
-    be automatically built upon it.
+    You only need to provide the implementation for this interface, and then an
+    ObjectGraph can be automatically built upon it.
 
     The methods you need to implement fall into the following categories:
      - create / delete node(s)
      - get all nodes / only nodes from a given class
      - check whether a node lives in a given graph
      - find a node given a list of matching properties
-
     """
 
     def clear(self):
         """Delete all nodes and links in this graph."""
         raise NotImplementedError
 
-    def create_node(self, props = [], _classes = set()):
-         raise NotImplementedError
+    def create_node(self, props = list(), _classes = set()):
+        """Create a node with the given properties and classes."""
+        raise NotImplementedError
 
     def delete_node(self, node):
-        """Remove a given node.
+        """Remove a given node from this graph.
 
-        strategies for what to do with linked nodes should be configurable, ie:
-        remove incoming/outgoing linked nodes as well, only remove link but do not
-        touch linked nodes, etc..."""
+        Strategies for what to do with linked nodes should be configurable, ie:
+        remove incoming/outgoing linked nodes as well, only remove link but do
+        not touch linked nodes, etc..."""
         raise NotImplementedError
 
     def nodes(self):
-        """Return an iterator on all the nodes in the graph."""
+        """Return an iterable on all the nodes in the graph."""
         raise NotImplementedError
 
     def nodes_from_class(self, cls):
-        """Return an iterator on the nodes of a given class."""
+        """Return an iterable on the nodes of a given class."""
         raise NotImplementedError
 
 
@@ -92,9 +94,9 @@ class AbstractDirectedGraph(object):
     def contains(self, node):
         """Return whether this graph contains the given node.
 
-        multiple strategies can be used here for determing object equality, such as
-        all properties equal, the primary subset of properties equal, etc... (those are defined
-        by the ObjectNode)"""
+        multiple strategies can be used here for determing object equality, such
+        as all properties equal, the primary subset of properties equal, etc...
+        (those are defined by the ObjectNode)"""
         raise NotImplementedError
 
     def __contains__(self, node):
@@ -106,6 +108,11 @@ class AbstractDirectedGraph(object):
     ### Methods related to a graph serialization
 
     def to_nodes_and_edges(self):
+        """Convert a graph in a tuple (nodes, edges, classes).
+
+        This is used for serializing a graph, as the resulting tuple is picklable,
+        for instance.
+        """
         nodes = {}
         classes = {}
         rnodes = {}
@@ -126,6 +133,7 @@ class AbstractDirectedGraph(object):
         return nodes, edges, classes
 
     def from_nodes_and_edges(self, nodes, edges, classes):
+        """Create a graph from the given (nodes, edges, classes) tuple."""
         from pygoo import ontology
 
         self.clear()
