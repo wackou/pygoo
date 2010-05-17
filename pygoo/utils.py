@@ -23,7 +23,7 @@ from pygoo import ontology
 import types
 
 def to_utf8(obj):
-    """converts all unicode strings found in the given object to utf-8 strings."""
+    """Converts all unicode strings in the given object to utf-8 strings."""
     if isinstance(obj, unicode):
         return obj.encode('utf-8')
     elif isinstance(obj, list):
@@ -37,12 +37,37 @@ def to_utf8(obj):
         return obj
 
 def tolist(obj):
-    if    obj is None: return []
-    elif  isinstance(obj, list): return obj
-    else: return [ obj ]
+    """Return object as a list:
+     - if object is None, return the empty list
+     - if object is a single object (ie: not a list), return a list with a
+       single element being the given object
+     - otherwise, (ie: it is a list), return the object itself
+    """
+    if obj is None:
+        return []
+    elif isinstance(obj, list):
+        return obj
+    else:
+        return [ obj ]
+
+
+def toresult(lst):
+    """Take a list and return a value depending on the number of elements in
+    that list:
+     - 0 elements -> return None
+     - 1 element  -> return the single element
+     - 2 or more elements -> return the original list."""
+    if not lst:
+        return None
+    elif len(lst) == 1:
+        return lst[0]
+    else:
+        return lst
 
 
 def multi_is_instance(value, cls):
+    """Return whether given object is an instance of the given class, of is a
+    sequence that contains only objects of the given class."""
     # FIXME: we might be calling this function a little bit too much...
     if isinstance(value, list):
         return all(isinstance(v, cls) for v in value)
@@ -54,20 +79,15 @@ def multi_is_instance(value, cls):
 
 
 
-def toresult(lst):
-    """Take a list and return a value depending on the number of elements in that list:
-     - 0 elements -> return None
-     - 1 element  -> return the single element
-     - 2 or more elements -> returns the original list."""
-    if    not lst: return None
-    elif  len(lst) == 1: return lst[0]
-    else: return lst
 
 def to_iterator(obj):
+    """Return an iterator over all objects contained in obj, or just over obj
+    if it is not a sequence."""
     for i in tolist(obj):
         yield i
 
 def is_of(name):
+    """Return the "is-of" name for the given property."""
     return 'is%sOf' % (name[0].upper() + name[1:])
 
 def is_literal(value):
@@ -77,7 +97,8 @@ def is_literal(value):
 
 
 def check_class(name, value, schema, converters = dict()):
-    """This function also converts BaseObjects to nodes after having checked their class."""
+    """This function also converts BaseObjects to nodes after having checked
+    their class."""
 
     # always try to autoconvert a string to a unicode
     if isinstance(value, str):
@@ -108,7 +129,8 @@ def check_class(name, value, schema, converters = dict()):
 
     # TODO: use specified converters, when available
 
-    raise TypeError, "The '%s' attribute is of type '%s' but you tried to assign it a '%s'" % (name, schema[name], type(value))
+    raise TypeError("The '%s' attribute is of type '%s' but you tried to assign it a '%s'"
+                    % (name, schema[name], type(value)))
 
 
 def reverse_lookup(d, cls):

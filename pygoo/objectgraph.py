@@ -18,11 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pygoo.objectnode import ObjectNode
 from pygoo.abstractdirectedgraph import AbstractDirectedGraph, Equal
-from pygoo.abstractnode import AbstractNode
 from pygoo.baseobject import BaseObject, get_node
-from pygoo.utils import reverse_lookup, toresult
+from pygoo.utils import reverse_lookup
 from pygoo import ontology
 import types
 import logging
@@ -125,11 +123,11 @@ class ObjectGraph(AbstractDirectedGraph):
         self.remove_directed_edge(other_node, reverse_name, node)
 
 
-    def add_node(self, node, recurse = Equal.OnIdentity, excluded_deps = []):
+    def add_node(self, node, recurse = Equal.OnIdentity, excluded_deps = list()):
         return self.add_object(BaseObject(node), recurse, excluded_deps)
 
 
-    def add_object(self, node, recurse = Equal.OnIdentity, excluded_deps = []):
+    def add_object(self, node, recurse = Equal.OnIdentity, excluded_deps = list()):
         """Add an object and its underlying node and its links recursively into the graph.
 
         If some dependencies of the node are already in the graph, we should not add
@@ -200,10 +198,9 @@ class ObjectGraph(AbstractDirectedGraph):
 
     ### Search methods
 
-    def find_node(self, node, cmp = Equal.OnIdentity, exclude_properties = []):
-        """Return a node in the graph that is equal to the given one using the specified comparison type.
-
-        Return None if not found."""
+    def find_node(self, node, cmp = Equal.OnIdentity, exclude_properties = list()):
+        """Return a node in the graph that is equal to the given one using the
+        specified comparison type, or None if not found."""
 
         if cmp == Equal.OnIdentity:
             if self.contains(node):
@@ -235,7 +232,7 @@ class ObjectGraph(AbstractDirectedGraph):
 
         return None
 
-    def find_all(self, type = None, valid_node = lambda x: True, **kwargs):
+    def find_all(self, node_type = None, valid_node = lambda x: True, **kwargs):
         """This method returns a list of the objects of the given type in this graph for which
         the cond function returns True (or sth that evaluates to True).
         It will also only keep those objects that have properties which match the given keyword
@@ -252,21 +249,21 @@ class ObjectGraph(AbstractDirectedGraph):
         If no match is found, it returns an empty list.
 
         examples:
-          g.find_all(type = Movie)
+          g.find_all(node_type = Movie)
           g.find_all(Episode, lambda x: x.season = 2)
           g.find_all(Movie, lambda m: m.releaseYear > 2000)
           g.find_all(Person, role_movie_title = 'The Dark Knight')
           g.find_all(Character, isCharacterOf_movie_title = 'Fear and loathing.*', regexp = True)
         """
-        return list(self._find_all(type, valid_node, **kwargs))
+        return list(self._find_all(node_type, valid_node, **kwargs))
 
 
-    def _find_all(self, type = None, valid_node = lambda x: True, **kwargs):
+    def _find_all(self, node_type = None, valid_node = lambda x: True, **kwargs):
         """Implementation of findAll that returns a generator."""
-        if isinstance(type, basestring):
-            type = ontology.get_class(type)
+        if isinstance(node_type, basestring):
+            node_type = ontology.get_class(node_type)
 
-        for node in self.nodes_from_class(type) if type else self.nodes():
+        for node in self.nodes_from_class(node_type) if node_type else self.nodes():
             # TODO: should this go before or after the properties checking? Which is faster in general?
             try:
                 if not valid_node(node):
@@ -291,23 +288,23 @@ class ObjectGraph(AbstractDirectedGraph):
             if not valid:
                 continue
 
-            if type:
-                yield type(node)
+            if node_type:
+                yield node_type(node)
             else:
                 yield node
 
 
-    def find_one(self, type = None, valid_node = lambda x: True, **kwargs):
+    def find_one(self, node_type = None, valid_node = lambda x: True, **kwargs):
         """Returns a single result. see findAll for description.
         Raises an exception if no result was found."""
         # NB: as _findAll is a generator, this should be fairly optimized
-        result = self._find_all(type, valid_node, **kwargs)
+        result = self._find_all(node_type, valid_node, **kwargs)
         try:
             return result.next()
         except StopIteration:
-            raise ValueError('Could not find given %s with props %s' % (type.__name__, kwargs))
+            raise ValueError('Could not find given %s with props %s' % (node_type.__name__, kwargs))
 
-    def find_or_create(self, type, **kwargs):
+    def find_or_create(self, node_type, **kwargs):
         '''This method returns the first object in this graph which has the specified type and
         properties which match the given keyword args dictionary.
         If no match is found, it creates a new object with the keyword args, inserts it in the
@@ -315,6 +312,40 @@ class ObjectGraph(AbstractDirectedGraph):
 
         example: g.findOrCreate(Series, title = 'Arrested Development')'''
         try:
-            return self.find_one(type, **kwargs)
+            return self.find_one(node_type, **kwargs)
         except ValueError:
-            return type(graph = self, **kwargs)
+            return node_type(graph = self, **kwargs)
+
+    ## Let's make PyLint happy and let it know that the following methods are still not implemented
+
+    def clear(self):
+        """Delete all nodes and links in this graph."""
+        raise NotImplementedError
+
+    def create_node(self, props = list(), _classes = set()):
+        """Create a node with the given properties and classes."""
+        raise NotImplementedError
+
+    def delete_node(self, node):
+        """Remove a given node from this graph.
+
+        Strategies for what to do with linked nodes should be configurable, ie:
+        remove incoming/outgoing linked nodes as well, only remove link but do
+        not touch linked nodes, etc..."""
+        raise NotImplementedError
+
+    def nodes(self):
+        """Return an iterable on all the nodes in the graph."""
+        raise NotImplementedError
+
+    def nodes_from_class(self, cls):
+        """Return an iterable on the nodes of a given class."""
+        raise NotImplementedError
+
+    def contains(self, node):
+        """Return whether this graph contains the given node.
+
+        multiple strategies can be used here for determing object equality, such
+        as all properties equal, the primary subset of properties equal, etc...
+        (those are defined by the ObjectNode)"""
+        raise NotImplementedError

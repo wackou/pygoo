@@ -197,11 +197,10 @@ def print_class(cls):
 
 
 def display_ontology():
-    import cPickle as pickle
     import tempfile
     import subprocess
 
-    fid, filename = tempfile.mkstemp(suffix = '.png')
+    _, filename = tempfile.mkstemp(suffix = '.png')
 
     dg = []
     dg += [ 'digraph G {' ]
@@ -211,7 +210,8 @@ def display_ontology():
         label = '<FONT COLOR="#884444">%s</FONT><BR/>' % cname
         attrs = []
         for name, type in cls.schema.items():
-            if name in cls.schema._implicit: continue
+            if name in cls.schema._implicit:
+                continue
             attrs += [ '%s: %s' % (name, type.__name__) ]
         for name in cls.schema._implicit:
             attrs += [ '<FONT COLOR="#666666">%s: %s</FONT>' % (name, cls.schema[name].__name__) ]
