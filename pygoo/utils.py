@@ -76,7 +76,7 @@ def is_literal(value):
             any(multi_is_instance(value, cls) for cls in ontology.validLiteralTypes))
 
 
-def check_class(name, value, schema, converters = {}):
+def check_class(name, value, schema, converters = dict()):
     """This function also converts BaseObjects to nodes after having checked their class."""
 
     # always try to autoconvert a string to a unicode
@@ -89,9 +89,9 @@ def check_class(name, value, schema, converters = {}):
     def tonodes(v):
         ontology.import_class('BaseObject')
         if isinstance(v, BaseObject):
-            return v._node
+            return v.node
         elif isinstance(v, list) and v != [] and isinstance(v[0], BaseObject):
-            return (n._node for n in v)
+            return (n.node for n in v)
         else:
             return v
 

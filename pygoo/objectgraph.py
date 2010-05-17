@@ -100,7 +100,7 @@ class ObjectGraph(AbstractDirectedGraph):
             def inst(basenode = None, **kwargs):
                 # if we're copying a node from a different graph, we need to intercept it here to
                 # add it correctly with its dependencies instead of creating from scratch
-                if basenode is not None and basenode._node.graph() != self:
+                if basenode is not None and basenode.node.graph() != self:
                     return self.add_object(basenode)
 
                 return ontology.get_class(name)(basenode = basenode, graph = self, **kwargs)
@@ -143,7 +143,7 @@ class ObjectGraph(AbstractDirectedGraph):
         """
         # FIXME: not necessarily correct, but safer for now to avoid infinite recursion
         #        ie, if we add a node without a class, we won't know its implicit dependencies
-        node = node._node.virtual()
+        node = node.node.virtual()
         log.debug('Adding to graph: %s - node: %s' % (self, node))
         node, node_class = unwrap_node(node)
 
@@ -176,7 +176,7 @@ class ObjectGraph(AbstractDirectedGraph):
                         log.debug('Importing dependency %s: %s' % (prop, v))
                         imported_nodes.append(self.add_object(wrap_node(v, node_class.schema.get(prop)),
                                                               recurse,
-                                                              excluded_deps = excluded_deps + [node])._node)
+                                                              excluded_deps = excluded_deps + [node]).node)
                     newprops.append((prop, imported_nodes, reverse_name))
             else:
                 newprops.append((prop, value, reverse_name))
@@ -279,7 +279,7 @@ class ObjectGraph(AbstractDirectedGraph):
                 try:
                     # FIXME: this doesn't work with lists of objects
                     if isinstance(value, BaseObject):
-                        value = value._node
+                        value = value.node
 
                     if node.get_chained_properties(prop.split('_')) != value:
                         valid = False

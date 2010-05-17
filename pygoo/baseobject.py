@@ -31,9 +31,9 @@ def get_node(node):
     if isinstance(node, AbstractNode):
         return node
     elif isinstance(node, BaseObject):
-        return node._node
+        return node.node
     elif isinstance(node, list) and isinstance(node[0], BaseObject):
-        return [ n._node for n in node ]
+        return [ n.node for n in node ]
     else:
         raise TypeError("Given object is not an ObjectNode or BaseObject instance")
 
@@ -41,9 +41,9 @@ def to_nodes(d):
     result = dict(d)
     for k, v in d.items():
         if isinstance(v, BaseObject):
-            result[k] = v._node
+            result[k] = v.node
         elif isinstance(v, list) and (v != [] and isinstance(v[0], BaseObject)):
-            result[k] = [ n._node for n in v ]
+            result[k] = [ n.node for n in v ]
     return result
 
 
@@ -168,8 +168,8 @@ class BaseObject(object):
         created = False
         if basenode is None:
             # if no basenode is given, we need to create a new node
-            self._node = graph.create_node(reverse_lookup(kwargs, self.__class__),
-                                           _classes = ontology.parent_classes(self.__class__))
+            self.node = graph.create_node(reverse_lookup(kwargs, self.__class__),
+                                          _classes = ontology.parent_classes(self.__class__))
             created = True
 
         else:
@@ -178,15 +178,15 @@ class BaseObject(object):
             # if basenode is already in this graph, no need to make a copy of it
             # if graph is None, we might just be making a new instance of a node, so it's in the same graph as well
             if graph is None or graph is basenode.graph():
-                self._node = basenode
+                self.node = basenode
             else:
                 if basenode.edge_keys():
                     # we have links, we can't just create the node without adding the dependencies...
                     raise Exception("sorry, can't do that right now...")
 
                 # TODO: we should be able to construct directly from the other node
-                self._node = graph.create_node(reverse_lookup(basenode, self.__class__),
-                                               _classes = basenode._classes)
+                self.node = graph.create_node(reverse_lookup(basenode, self.__class__),
+                                              _classes = basenode._classes)
                 created = True
 
 
@@ -196,29 +196,29 @@ class BaseObject(object):
 
         # if we just created a node and the graph is static, we gave it its valid classes without actually checking...
         # if not a valid instance, remove it from the list of valid classes so that the next check will fail
-        if created and not self._node.graph()._dynamic:
-            if allow_incomplete and not self._node.has_valid_properties(self.__class__, set(self.__class__.valid).intersection(set(self._node.keys()))):
-                self._node.remove_class(self.__class__)
-            if not allow_incomplete and not self._node.is_valid_instance(self.__class__):
-                self._node.remove_class(self.__class__)
+        if created and not self.node.graph()._dynamic:
+            if allow_incomplete and not self.node.has_valid_properties(self.__class__, set(self.__class__.valid).intersection(set(self.node.keys()))):
+                self.node.remove_class(self.__class__)
+            if not allow_incomplete and not self.node.is_valid_instance(self.__class__):
+                self.node.remove_class(self.__class__)
 
 
         # make sure that the new instance we're creating is actually a valid one
         # Note: the following comment shouldn't be necessary if the list of valid classes is always up-to-date
-        #if not (self._node.isinstance(self.__class__) or
-        #        (self._node._graph._dynamic and self._node.isValidInstance(self.__class__))):
-        if not self._node.isinstance(self.__class__):
+        #if not (self.node.isinstance(self.__class__) or
+        #        (self.node._graph._dynamic and self.node.isValidInstance(self.__class__))):
+        if not self.node.isinstance(self.__class__):
             # if we just created the node and it is invalid, we need to remove it
             if created:
-                self._node.graph().delete_node(self._node)
+                self.node.graph().delete_node(self.node)
 
             raise TypeError("Cannot instantiate a valid instance of %s because:\n%s" %
-                            (self.__class__.__name__, self._node.invalid_properties(self.__class__)))
+                            (self.__class__.__name__, self.node.invalid_properties(self.__class__)))
 
 
 
     def __contains__(self, prop):
-        return prop in self._node
+        return prop in self.node
 
     def get(self, name):
         try:
@@ -227,7 +227,7 @@ class BaseObject(object):
             return None
 
     def __getattr__(self, name):
-        result = getattr(self._node, name)
+        result = getattr(self.node, name)
 
         # if the result is an ObjectNode, wrap it with the class it has been given in the class schema
         # if it was not in the class schema, simply returns an instance of BaseObject
@@ -245,7 +245,7 @@ class BaseObject(object):
 
 
     def __setattr__(self, name, value):
-        if name == '_node':
+        if name == 'node':
             object.__setattr__(self, name, value)
         else:
             self.set(name, value)
@@ -270,16 +270,16 @@ class BaseObject(object):
 
     def set(self, name, value, validate = True):
         """Sets the given value to the named property."""
-        self._apply_multi(self._node.set, name, value, validate)
+        self._apply_multi(self.node.set, name, value, validate)
 
     def append(self, name, value, validate = True):
-        self._apply_multi(self._node.append, name, value, validate)
+        self._apply_multi(self.node.append, name, value, validate)
 
     def __eq__(self, other):
         # TODO: should allow comparing a BaseObject with an ObjectNode?
         if not isinstance(other, BaseObject): return False
 
-        if self._node == other._node: return True
+        if self.node == other.node: return True
 
         # FIXME: this could lead to cycles or very long chained __eq__ calling on properties
         return self.explicit_items() == other.explicit_items()
@@ -288,7 +288,7 @@ class BaseObject(object):
         return not self.__eq__(other)
 
     def __str__(self):
-        return self._node.to_string(cls = self.__class__, default = BaseObject).encode('utf-8')
+        return self.node.to_string(cls = self.__class__, default = BaseObject).encode('utf-8')
 
     def __repr__(self):
         return self.__str__()
@@ -309,19 +309,19 @@ class BaseObject(object):
 
     def virtual(self):
         """Return an instance of the most specialized class that this node is an instance of."""
-        return self._node.virtual()
+        return self.node.virtual()
 
     def update(self, props):
         props = to_nodes(props)
         for name, value in props.items():
             self.set(name, value, validate = False)
-        self._node.update_valid_classes()
+        self.node.update_valid_classes()
 
     def is_unique(self):
         """Return whether all unique properties (as defined by the class) of the ObjectNode
         are non-null."""
         for prop in self.__class__.unique:
-            if prop not in self._node:
+            if prop not in self.node:
                 return False
         return True
 
@@ -337,7 +337,7 @@ class BaseObject(object):
 
         NB: this should be replaced by using an OrderedDict."""
         result = []
-        property_names = list(self._node.keys())
+        property_names = list(self.node.keys())
 
         for p in self.__class__.order:
             if p in property_names:

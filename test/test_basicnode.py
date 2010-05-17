@@ -184,7 +184,7 @@ class TestAbstractNode(TestCase):
         g3.load('/tmp/pygoo_unittest.db')
 
         self.assertEqual(g3.find_one(NiceGuy, n = 'n2').friend.a, 23)
-        self.assertEqual(g3.find_one(NiceGuy, n = 'n2').friend._node, g3.find_one(BaseObject, n = 'n1')._node)
+        self.assertEqual(g3.find_one(NiceGuy, n = 'n2').friend.node, g3.find_one(BaseObject, n = 'n1').node)
 
         os.remove('/tmp/pygoo_unittest.db')
 

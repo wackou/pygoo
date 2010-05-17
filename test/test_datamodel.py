@@ -40,9 +40,9 @@ class TestObjectNode(TestCase):
         n1.sameas = n2
         # make sure there's no ambiguity between ObjectNodes and BaseObjects
         self.assertEqual(n1.sameas, n2)
-        self.assert_(n2._node in n1._node.sameas)
-        self.assert_(n2 not in n1._node.sameas)
-        self.assertNotEqual(n1.sameas, n2._node)
+        self.assert_(n2.node in n1.node.sameas)
+        self.assert_(n2 not in n1.node.sameas)
+        self.assertNotEqual(n1.sameas, n2.node)
         self.assertEqual(BaseObject(n1.sameas), n2)
 
         n2.plot = u'empty'
@@ -186,7 +186,7 @@ class TestObjectNode(TestCase):
 
         ep = g.find_one(Episode)
         # Series needs only 'title', so it should be a fit if the graph is dynamic
-        self.assertEqual(ep._node, Series(ep)._node)
+        self.assertEqual(ep.node, Series(ep).node)
 
         s = g.find_one(Series, title = 'The Wire')
         self.assertRaises(TypeError, Episode, s)
@@ -225,7 +225,7 @@ class TestObjectNode(TestCase):
         g2 = MemoryObjectGraph()
 
         n1 = g.BaseObject(x = 1)
-        self.assert_(n1._node in g)
+        self.assert_(n1.node in g)
         n2 = g.BaseObject(x = 1)
         n3 = g.BaseObject(n1)
         n4 = g2.BaseObject(n1)
@@ -236,12 +236,12 @@ class TestObjectNode(TestCase):
         self.assertEqual(n1, n4)
 
         # equality of nodes should be based on identity
-        self.assertEqual(n1._node, n3._node)
-        self.assertNotEqual(n1._node, n2._node)
-        self.assertNotEqual(n1._node, n4._node) # not equal as they live in different graphs
+        self.assertEqual(n1.node, n3.node)
+        self.assertNotEqual(n1.node, n2.node)
+        self.assertNotEqual(n1.node, n4.node) # not equal as they live in different graphs
 
         # graph belonging should be tested with identity (related to node)
-        self.assert_(n1._node in g)
+        self.assert_(n1.node in g)
         self.assert_(n3 in g)
         self.assert_(n4 not in g)
 
@@ -285,8 +285,8 @@ class TestObjectNode(TestCase):
 
         self.assertEquals(len(g2.find_all(a = 23)), 2) # no new node added with a = 23
         # reference should have been updated though, no trying to keep old friends
-        self.assert_(r4.friend._node in [ r._node for r in tolist(r2.friend) ] or
-                     r4.friend._node in [ r._node for r in tolist(r3.friend) ])
+        self.assert_(r4.friend.node in [ r.node for r in tolist(r2.friend) ] or
+                     r4.friend.node in [ r.node for r in tolist(r3.friend) ])
 
 
     def testReverseAttributeLookup(self):
@@ -397,4 +397,3 @@ class TestObjectNode(TestCase):
         g.close()
 
         g2 = Neo4jObjectGraph('/tmp/gloub')
-

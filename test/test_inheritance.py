@@ -131,10 +131,9 @@ class TestInheritance(TestCase):
 
         g = MemoryObjectGraph(dynamic = True)
         b = g.B()
-        self.assert_(A in b._node._classes)
+        self.assert_(A in b.node._classes)
 
         g = MemoryObjectGraph(dynamic = False)
         b = g.B()
-        self.assert_(A not in b._node._classes)
-
+        self.assert_(A not in b.node._classes)
 
