@@ -293,6 +293,18 @@ class BaseObject(object):
     def __repr__(self):
         return self.__str__()
 
+    def schema_keys(self):
+        return self.__class__.schema.keys()
+
+    def schema_items(self):
+        return [ x for x in self.items() if x[0] in self.__class__.schema ]
+
+    def explicit_schema_keys(self):
+        return [ x for x in self.schema_keys() if x not in self.__class__.schema._implicit ]
+
+    def explicit_schema_items(self):
+        return [ x for x in self.schema_items() if x[0] not in self.__class__.schema._implicit ]
+
     def explicit_keys(self):
         return [ x for x in self.keys() if x not in self.__class__.schema._implicit ]
 
@@ -325,6 +337,8 @@ class BaseObject(object):
                 return False
         return True
 
+    def unique_properties(self):
+        return self.__class__.unique
 
     def unique_key(self):
         """Return a tuple containing an unique identifier (inside its class) for this instance.

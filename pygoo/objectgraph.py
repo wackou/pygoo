@@ -221,7 +221,8 @@ class ObjectGraph(AbstractDirectedGraph):
 
         elif cmp == Equal.OnUnique:
             obj = node.virtual()
-            props = list(set(obj.explicit_keys()) - set(exclude_properties))
+            props = list(set(obj.unique_properties()) - set(exclude_properties))
+            #print 'find_node OnUnique: Comparing on props:', props
             for n in self.nodes():
                 if node.same_properties(n, props):
                     log.debug('%s already in graph %s (unique)...' % (node, self))
