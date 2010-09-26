@@ -1,23 +1,10 @@
-This file requires editing
+PyGoo
 ==========================
 
-Note to the author: Please add something informative to this README *before*
-releasing your software, as `a little documentation goes a long way`_.  Both
-README.rst (this file) and NEWS.txt (release notes) will be included in your
-package metadata which gets displayed in the PyPI page for your project.
+PyGoo is an object-mapper for graph databases, such as `Neo4j`_.
+It achieves the same goal as other object-mappers such as SQLAlchemy,
+but uses graph databases as its backend.
+It can also work as standalone mode, where there is no synchronization
+with an underlying database but all the data is kept in memory.
 
-You can take a look at the README.txt of other projects, such as repoze.bfg
-(http://bfg.repoze.org/trac/browser/trunk/README.txt) for some ideas.
-
-.. _`a little documentation goes a long way`: http://www.martinaspeli.net/articles/a-little-documentation-goes-a-long-way
-
-Credits
--------
-
-- `Distribute`_
-- `Buildout`_
-- `modern-package-template`_
-
-.. _Buildout: http://www.buildout.org/
-.. _Distribute: http://pypi.python.org/pypi/distribute
-.. _`modern-package-template`: http://pypi.python.org/pypi/modern-package-template
+.. _`Neo4j`: http://neo4j.org
