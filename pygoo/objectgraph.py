@@ -202,6 +202,10 @@ class ObjectGraph(AbstractDirectedGraph):
         """Return a node in the graph that is equal to the given one using the
         specified comparison type, or None if not found."""
 
+        # TODO: could prefilter all the nodes with their classes, instead of comparing
+        #       properties for nodes which are not even the same classes, that would surely
+        #       make things much much faster, especially if classes are stored in a tuple
+
         if cmp == Equal.OnIdentity:
             if self.contains(node):
                 log.debug('%s already in graph %s (id)...' % (node, self))
@@ -222,9 +226,11 @@ class ObjectGraph(AbstractDirectedGraph):
         elif cmp == Equal.OnUnique:
             obj = node.virtual()
             props = list(set(obj.unique_properties()) - set(exclude_properties))
-            #print 'find_node OnUnique: Comparing on props:', props
+            #print 'find_node OnUnique:', node
+            #print 'Comparing on props:', props
             for n in self.nodes():
-                if node.same_properties(n, props):
+                #print '  ', n
+                if node.same_properties(n, props, cmp = Equal.OnUnique):
                     log.debug('%s already in graph %s (unique)...' % (node, self))
                     return n
 

@@ -19,6 +19,7 @@
 #
 
 from pygoo.abstractnode import AbstractNode
+from pygoo.abstractdirectedgraph import Equal
 from pygoo.baseobject import BaseObject
 from pygoo.utils import tolist, toresult, is_of, multi_is_instance, is_literal
 from pygoo import ontology
@@ -311,7 +312,7 @@ class ObjectNode(AbstractNode):
         """Update this ObjectNode properties with the only other ones it doesn't have yet."""
         raise NotImplementedError
 
-    def same_properties(self, other, props = None, exclude = []):
+    def same_properties(self, other, props = None, exclude = [], cmp = None):
         # NB: sameValidProperties and sameUniqueProperties should be defined in BaseObject
         # TODO: this can surely be optimized
         if props is None:
@@ -322,17 +323,30 @@ class ObjectNode(AbstractNode):
         for name, value in props:
             if name in exclude:
                 continue
+            #print '     prop:', name,
             if isinstance(value, types.GeneratorType):
                 svalue = list(self.get(name))
                 value = list(value)
+                #print 'gen; value=', svalue, value
 
-                # FIXME: v1.virtual() should not be used here...
-                result = (len(svalue) == len(value) and
-                          all(v1.virtual() == v2.virtual() for v1, v2 in zip(svalue, value)))
+                if cmp == Equal.OnUnique:
+                    # FIXME: this is an ugly workaround, but I need to get pygoo back on track
+                    #        and this has to work *right now*
+                    def same_props_obj(obj1, obj2):
+                        props = obj1.unique_properties()
+                        return obj1.node.same_properties(obj2.node, props, cmp = Equal.OnUnique)
+
+                    result = (len(svalue) == len(value) and
+                              all(same_props_obj(v1.virtual(), v2.virtual()) for v1, v2 in zip(svalue, value)))
+                else:
+                    # FIXME: v1.virtual() should not be used here...
+                    result = (len(svalue) == len(value) and
+                              all(v1.virtual() == v2.virtual() for v1, v2 in zip(svalue, value)))
 
                 if result is False:
                     return False
             else:
+                #print 'normal; value=', self.get(name), value
                 if self.get(name) != value:
                     return False
 
