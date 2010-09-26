@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import sys
 import logging
 
 log = logging.getLogger('pygoo.AbstractDirectedGraph')
@@ -208,4 +209,7 @@ class AbstractDirectedGraph(object):
 
         subprocess.Popen([ 'dot', '-Tpng', '-o', filename ], stdin = subprocess.PIPE).communicate('\n'.join(dg))
 
-        subprocess.Popen([ 'gwenview', filename ], stdout = subprocess.PIPE, stderr = subprocess.PIPE).communicate()
+        if sys.platform == 'linux2':
+            subprocess.Popen([ 'gwenview', filename ], stdout = subprocess.PIPE, stderr = subprocess.PIPE).communicate()
+        else:
+            subprocess.Popen([ 'open', filename ], stdout = subprocess.PIPE, stderr = subprocess.PIPE).communicate()
