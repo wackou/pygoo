@@ -164,7 +164,7 @@ def validate_class_definition(cls, attrs):
 
     diff = set(reverse_lookup).symmetric_difference(set(object_props))
     if diff:
-        raise TypeError("In '%s': you should define exactly one reverseLookup name for each property in your schema that is a subclass of BaseObject, different ones: %s" % (cls.__name__, ', '.join("'%s'" % c for c in diff)))
+        raise TypeError("In '%s': you should define exactly one reverse_lookup name for each property in your schema that is a subclass of BaseObject, different ones: %s" % (cls.__name__, ', '.join("'%s'" % c for c in diff)))
 
     # directly update the schema for other classes where needed
     # TODO: make sure we don't overwrite anything (should have been done in the validate_class_definition, right?)
