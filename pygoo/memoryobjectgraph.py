@@ -41,7 +41,7 @@ class MemoryObjectGraph(ObjectGraph):
         return self.__class__._object_node_class(self, props, _classes)
 
     def delete_node(self, node):
-        node.unlinkAll()
+        node.unlink_all()
         node.graph = None
         self._nodes.remove(node)
 
