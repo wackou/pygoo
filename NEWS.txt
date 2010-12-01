@@ -6,6 +6,15 @@
 News
 ====
 
+0.1
+----
+
+*Release date: 1-Dec-2010*
+
+* first release that allows to have Smewt working. Still lots of
+  issues to fix (esp. regarding performance), but it works!
+
+
 0.1a1
 -----
 
