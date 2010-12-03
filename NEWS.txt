@@ -6,6 +6,14 @@
 News
 ====
 
+0.1.1
+----
+
+*Release date: 3-Dec-2010*
+
+* Fixed previous release which somehow managed to not get the
+  mentioned fixes...
+
 0.1
 ----
 
