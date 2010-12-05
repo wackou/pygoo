@@ -6,8 +6,16 @@
 News
 ====
 
+0.1.2
+-----
+
+*Release date: 5-Dec-2010*
+
+* Fixed NEWS.rst file so that PyPI page doesn't look like crap.
+
+
 0.1.1
-----
+-----
 
 *Release date: 3-Dec-2010*
 
@@ -15,7 +23,7 @@ News
   mentioned fixes...
 
 0.1
-----
+---
 
 *Release date: 1-Dec-2010*
 
