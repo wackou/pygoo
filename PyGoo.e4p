@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-4.6.dtd">
 <!-- eric4 project file for project PyGoo -->
-<!-- Saved: 2010-05-11, 00:37:44 -->
-<!-- Copyright (C) 2010 Nicolas Wack, wackou@gmail.com -->
+<!-- Saved: 2011-01-14, 20:20:00 -->
+<!-- Copyright (C) 2011 Nicolas Wack, wackou@gmail.com -->
 <Project version="4.6">
   <Language>en</Language>
   <ProgLanguage mixed="0">Python</ProgLanguage>
@@ -26,7 +26,6 @@
     <Source>pygoo/objectnode.py</Source>
     <Source>pygoo/ontology.py</Source>
     <Source>pygoo/utils.py</Source>
-    <Source>README.rst</Source>
     <Source>NEWS.txt</Source>
     <Source>test/test_inheritance.py</Source>
     <Source>test/test_basicnode.py</Source>
@@ -34,6 +33,7 @@
     <Source>test/test_datamodel.py</Source>
     <Source>test/pygootest.py</Source>
     <Source>test/mediaontology.py</Source>
+    <Source>README.txt</Source>
   </Sources>
   <Forms>
   </Forms>
