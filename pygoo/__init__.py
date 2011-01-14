@@ -18,6 +18,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import logging
+
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
+h = NullHandler()
+logging.getLogger("pygoo").addHandler(h)
+
 from pygoo.memoryobjectgraph import MemoryObjectGraph
 from pygoo.objectgraph import Equal
 from pygoo.baseobject import BaseObject
