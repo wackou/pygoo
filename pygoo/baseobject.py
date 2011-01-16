@@ -220,11 +220,11 @@ class BaseObject(object):
     def __contains__(self, prop):
         return prop in self.node
 
-    def get(self, name):
+    def get(self, name, default = None):
         try:
             return getattr(self, name)
         except:
-            return None
+            return default
 
     def __getattr__(self, name):
         result = getattr(self.node, name)
