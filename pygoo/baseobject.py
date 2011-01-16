@@ -50,7 +50,7 @@ def to_nodes(d):
 # Metaclass to be used for BaseObject so that they are automatically registered in the ontology
 class OntologyClass(type):
     def __new__(cls, name, bases, attrs):
-        log.info('Creating ontology class: %s' % name)
+        log.debug('Creating ontology class: %s' % name)
         if len(bases) > 1:
             raise TypeError('BaseObject does not allow multiple inheritance for class: %s' % name)
         return type.__new__(cls, name, bases, attrs)

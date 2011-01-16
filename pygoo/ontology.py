@@ -56,6 +56,7 @@ def save_current_ontology(name):
     # we need to make a copy of the elements here, and of the properties explicitly
     # as when we change the ontology, we modify references to always the same class,
     # not a copy of it
+    log.info('Saving current ontology as "%s"...' % name)
     classes = dict(_classes)
     classvars = [ (cls, cls.class_variables()) for cls in _classes.values() ]
     _saved_ontologies[name] = (classes, classvars)
@@ -67,6 +68,8 @@ def reload_saved_ontology(name):
         classes, classvars = _saved_ontologies[name]
     except KeyError:
         raise KeyError("Could not find '%s' ontology" % name)
+
+    log.info('Reloading "%s" ontology...' % name)
 
     _classes = dict(classes)
     for cls, cvars in classvars:
@@ -229,6 +232,8 @@ def display_ontology():
     subprocess.Popen([ 'gwenview', filename ], stdout = subprocess.PIPE, stderr = subprocess.PIPE).communicate()
 
 def register(cls, attrs):
+    log.info('Registering ontology class: %s' % cls.__name__)
+
     # when registering BaseObject, skip the tests
     if cls.__name__ == 'BaseObject':
         _classes['BaseObject'] = cls

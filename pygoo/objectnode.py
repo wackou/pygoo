@@ -365,7 +365,7 @@ class ObjectNode(AbstractNode):
         return str(self)
 
 
-    def to_string(self, cls = None, default = None):
+    def to_string(self, cls = None, default = None, recurseLimit = 2):
         # TODO: smarter stringize that guesses the class, should it always be there?
         cls = self.virtual_class()
 
@@ -381,7 +381,10 @@ class ObjectNode(AbstractNode):
                 if prop in cls.schema._implicit:
                     continue
                 elif isinstance(value, types.GeneratorType):
-                    props.append((prop, unicode(toresult([ v.to_string(cls = cls.schema.get(prop) or default) for v in value ]))))
+                    if recurseLimit:
+                        props.append((prop, unicode(toresult([ v.to_string(cls = cls.schema.get(prop) or default, recurseLimit = recurseLimit-1) for v in value ]))))
+                    else:
+                        props.append((prop, u'[...]'))
                 else:
                     props.append((prop, unicode(value)))
 

@@ -77,6 +77,78 @@ class TestInheritance(TestCase):
         self.assertRaises(TypeError, multi)
 
 
+    def testMessy(self):
+        class Metadata(BaseObject):
+            schema = {}
+            valid = []
+
+        class Media(BaseObject):
+            schema = { 'filename': unicode,
+                       'sha1': unicode,
+                       'metadata': Metadata
+                       }
+
+            valid = [ 'filename' ]
+            unique = [ 'filename' ]
+            reverse_lookup = { 'metadata': 'files' }
+
+        class Series(Metadata):
+            schema = { 'title': unicode,
+                       'numberSeasons': int,
+                       }
+
+            valid = [ 'title' ]
+            unique = [ 'title' ]
+
+
+        class Episode(Metadata):
+            schema = { 'series': Series,
+                       'season': int,
+                       'episodeNumber': int,
+                       'title': unicode
+                       }
+
+            valid = [ 'series', 'season', 'episodeNumber' ]
+            reverse_lookup = { 'series': 'episodes' }
+
+
+        class Subtitle(Metadata):
+            schema = { 'metadata': Metadata,
+                       'language': unicode }
+
+            valid = [ 'metadata' ]
+
+            reverse_lookup = { 'metadata': 'subtitles' }
+
+        g = MemoryObjectGraph()
+        s = g.Series(title = 'glou')
+        ep = g.Episode(series = s, season = 1, episodeNumber = 3)
+        file = g.Media(filename = '/tmp/gloubi-boulga', metadata = ep)
+
+        subs = []
+        subs += [ g.Subtitle(metadata = file.metadata,
+                             language = 'en') ]
+        #g.display_graph()
+        file.metadata = subs
+        #g.display_graph()
+        subs += [ g.Subtitle(metadata = file.metadata,
+                             language = 'fr') ]
+        #g.display_graph()
+        file.metadata = subs
+        #g.display_graph()
+        subs += [ g.Subtitle(metadata = file.metadata,
+                             language = 'es') ]
+        file.metadata = subs
+
+        # FIXME: even though to_string() doesn't choke on this anymore, there is still something fishy with why this is allowed to happen
+        str(subs[0])
+        str(subs[1])
+        str(subs[2])
+        str(file)
+        #g.display_graph()
+
+
+
     def testImplicitSchema(self):
         class A(BaseObject):
             schema = { 'a': int }
