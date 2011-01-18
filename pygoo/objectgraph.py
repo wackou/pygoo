@@ -157,9 +157,11 @@ class ObjectGraph(AbstractDirectedGraph):
 
         gnode = self.find_node(node, recurse, excluded_properties)
         if gnode is not None:
+            log.debug('Found already existing node %s' % gnode)
             return wrap_node(gnode, node_class)
 
         # if node isn't already in graph, we need to make a copy of it that lives in this graph
+        log.debug('Creating a new node in this graph')
 
         # first import any other node this node might depend on
         newprops = []
@@ -180,6 +182,7 @@ class ObjectGraph(AbstractDirectedGraph):
                 newprops.append((prop, value, reverse_name))
 
         # actually create the node
+        log.debug('Creating node')
         result = self.create_node(newprops, _classes = node._classes)
 
         return wrap_node(result, node_class)
@@ -202,23 +205,19 @@ class ObjectGraph(AbstractDirectedGraph):
         """Return a node in the graph that is equal to the given one using the
         specified comparison type, or None if not found."""
 
-        # TODO: could prefilter all the nodes with their classes, instead of comparing
-        #       properties for nodes which are not even the same classes, that would surely
-        #       make things much much faster, especially if classes are stored in a tuple
-
         if cmp == Equal.OnIdentity:
             if self.contains(node):
                 log.debug('%s already in graph %s (id)...' % (node, self))
                 return node
 
         elif cmp == Equal.OnValue:
-            for n in self.nodes():
+            for n in self.nodes_from_class(node.virtual_class()):
                 if node.same_properties(n, exclude = exclude_properties):
                     log.debug('%s already in graph %s (value)...' % (node, self))
                     return n
 
         elif cmp == Equal.OnLiterals:
-            for n in self.nodes():
+            for n in self.nodes_from_class(node.virtual_class()):
                 if node.same_properties(n, n.literal_keys(), exclude = exclude_properties):
                     log.debug('%s already in graph %s (literals)...' % (node, self))
                     return n
@@ -226,18 +225,14 @@ class ObjectGraph(AbstractDirectedGraph):
         elif cmp == Equal.OnUnique:
             obj = node.virtual()
             props = list(set(obj.unique_properties()) - set(exclude_properties))
-            #print 'find_node OnUnique:', node
-            #print 'Comparing on props:', props
-            for n in self.nodes():
-                #print '  ', n
+            for n in self.nodes_from_class(node.virtual_class()):
                 if node.same_properties(n, props, cmp = Equal.OnUnique):
-                    log.debug('%s already in graph %s (unique)...' % (node, self))
+                    log.debug('%s already in graph %s (unique)...' % (n, self))
                     return n
 
         else:
             raise NotImplementedError
 
-        return None
 
     def find_all(self, node_type = None, valid_node = lambda x: True, **kwargs):
         """This method returns a list of the objects of the given type in this graph for which
