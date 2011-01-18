@@ -365,7 +365,7 @@ class ObjectNode(AbstractNode):
         return str(self)
 
 
-    def to_string(self, cls = None, default = None, recurseLimit = 2):
+    def to_string(self, cls = None, default = None, recurseLimit = 2, fancyIndent = False):
         # TODO: smarter stringize that guesses the class, should it always be there?
         cls = self.virtual_class()
 
@@ -382,10 +382,20 @@ class ObjectNode(AbstractNode):
                     continue
                 elif isinstance(value, types.GeneratorType):
                     if recurseLimit:
-                        props.append((prop, unicode(toresult([ v.to_string(cls = cls.schema.get(prop) or default, recurseLimit = recurseLimit-1) for v in value ]))))
+                        props.append((prop, unicode(toresult([ v.to_string(cls = cls.schema.get(prop) or default,
+                                                                           recurseLimit = recurseLimit-1,
+                                                                           fancyIndent = fancyIndent) for v in value ]))))
                     else:
                         props.append((prop, u'[...]'))
                 else:
                     props.append((prop, unicode(value)))
 
-        return u'%s(%s)' % (cls.__name__, ', '.join([ u'%s=%s' % (k, v) for k, v in props ]))
+        # could be toJson() instead of simply fancyIndent
+        if fancyIndent:
+            result = '%s {\n' % cls.__name__
+            for k, v in props:
+                indented = '\n    '.join(v.split('\n'))
+                result += '    %s: %s\n' % (k, indented)
+            return result + '}'
+        else:
+            return u'%s(%s)' % (cls.__name__, ', '.join([ u'%s=%s' % (k, v) for k, v in props ]))
