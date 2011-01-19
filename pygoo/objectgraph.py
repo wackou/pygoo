@@ -270,6 +270,15 @@ class ObjectGraph(AbstractDirectedGraph):
         if isinstance(node_type, basestring):
             node_type = ontology.get_class(node_type)
 
+        if node_type is None:
+            nodes = self.nodes()
+        elif issubclass(node_type, BaseObject):
+            nodes = self.nodes_from_class(node_type)
+        elif isinstance(node_type, tuple):
+            nodes = set(set(self.nodes_from_class(cls)) for cls in node_type)
+        else:
+            raise TypeError('ObjectGraph.find_node: Invalid node type: %s' % node_type)
+
         for node in self.nodes_from_class(node_type) if node_type else self.nodes():
             # TODO: should this go before or after the properties checking? Which is faster in general?
             try:
