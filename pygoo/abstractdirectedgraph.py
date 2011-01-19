@@ -146,9 +146,8 @@ class AbstractDirectedGraph(object):
         for node, name, other_node in edges:
             idmap[node].add_directed_edge(name, idmap[other_node])
 
-        # TODO: we need to make sure that the current ontology is the saem as when we saved this graph, otherwise
+        # TODO: we need to make sure that the current ontology is the same as when we saved this graph, otherwise
         #       previously set classes might not be valid anymore, or some subclasses won't be correctly set
-        # we need to revalidate explicitly, as we might have classes in our ontolo
         #self.revalidate_objects()
 
 

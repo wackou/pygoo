@@ -45,7 +45,7 @@ class MemoryObjectGraph(ObjectGraph):
         node.graph = None
         self._nodes.remove(node)
 
-        # FIXME: we need to revalidate the touched nodes
+        # FIXME: we need to revalidate the nodes touched by unlink_all()
 
 
     def nodes(self):
