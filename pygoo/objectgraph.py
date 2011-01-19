@@ -113,7 +113,12 @@ class ObjectGraph(AbstractDirectedGraph):
 
 
     def add_link(self, node, name, other_node, reverse_name):
-        # otherNode should always be a valid node
+        # otherNode should always be a valid instance of a node
+
+        # here we want to check first if we're adding a node that's in the same graph or not
+        if node.graph is not other_node.graph:
+            raise ValueError('Trying to set attribute "%s" for %s to %s, but they\'re not in the same graph' % (name, node, other_node))
+
         self.add_directed_edge(node, name, other_node)
         self.add_directed_edge(other_node, reverse_name, node)
 
@@ -290,14 +295,22 @@ class ObjectGraph(AbstractDirectedGraph):
             if not valid:
                 continue
 
-            if node_type:
-                yield node_type(node)
-            else:
+            if node_type is None:
                 yield node
+            else:
+                if isinstance(node_type, tuple):
+                    for cls in node_type:
+                        if node.isinstance(cls):
+                            yield cls(node)
+                            break
+                    else:
+                        raise TypeError('ObjectGraph._find_all: asked for nodes of type %s but found this one: %s' % (node_type, node))
+                else:
+                    yield node_type(node)
 
 
     def find_one(self, node_type = None, valid_node = lambda x: True, **kwargs):
-        """Returns a single result. see findAll for description.
+        """Returns a single result. see find_all for description.
         Raises an exception if no result was found."""
         # NB: as _findAll is a generator, this should be fairly optimized
         result = self._find_all(node_type, valid_node, **kwargs)
@@ -305,6 +318,7 @@ class ObjectGraph(AbstractDirectedGraph):
             return result.next()
         except StopIteration:
             raise ValueError('Could not find given %s with props %s' % (node_type.__name__ if node_type else 'node', kwargs))
+
 
     def find_or_create(self, node_type, **kwargs):
         '''This method returns the first object in this graph which has the specified type and

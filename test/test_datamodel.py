@@ -203,6 +203,40 @@ class TestObjectNode(TestCase):
         s = g.find_one(Series)
         self.assertRaises(TypeError, Episode, s)
 
+    def testGraphAddObject(self):
+        class A(BaseObject):
+            schema = { 'a': int }
+            valid = schema.keys()
+
+        class B(BaseObject):
+            schema = { 'a': A }
+            valid = schema.keys()
+            reverse_lookup = { 'a': 'b' }
+
+        g1 = MemoryObjectGraph()
+        g2 = MemoryObjectGraph()
+
+        b = g1.B(a = g1.A(a = 1))
+
+        # g1
+        #     b.a -> A(1)
+        #
+        g1.to_nodes_and_edges() # cheap check to see whether the graph is consistent or not
+
+        b.a = g1.add_object(g2.A(a = 2))
+
+        # g1                  g2
+        #     b.a -> A(2)         A(2)
+        #
+        #            A(1)
+        #
+        g1.to_nodes_and_edges() # cheap check to see whether the graph is consistent or not
+        self.assertEqual(len(list(g1.nodes())), 3)
+
+        # API forbids to add directly an object via set() which is not in the same graph
+        # -> need to use add_object
+        self.assertRaises(ValueError, b.set, 'a', g2.A(a = 3))
+
 
     def testValidUniqueMethods(self):
         self.registerMediaOntology()
