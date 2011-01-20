@@ -238,6 +238,14 @@ class TestObjectNode(TestCase):
         self.assertRaises(ValueError, b.set, 'a', g2.A(a = 3))
 
 
+        g1 = MemoryObjectGraph()
+        g2 = MemoryObjectGraph()
+
+        a = g1.A(a = 2, gloups = 3)
+        a2 = g2.add_object(a, recurse = Equal.OnUnique)
+
+        self.assertEqual(a2.get('gloups'), 3)
+
     def testValidUniqueMethods(self):
         self.registerMediaOntology()
 

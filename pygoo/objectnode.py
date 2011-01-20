@@ -188,6 +188,8 @@ class ObjectNode(AbstractNode):
         # TODO: why do we need this again?
         raise NotImplementedError
 
+    # TODO: implement __len__ for container?
+
 
     ### Acessing properties methods
 

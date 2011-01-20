@@ -226,6 +226,9 @@ class BaseObject(object):
         except:
             return default
 
+
+    #### a BaseObject has custom attribute access ####
+
     def __getattr__(self, name):
         result = getattr(self.node, name)
 
@@ -243,12 +246,30 @@ class BaseObject(object):
         else:
             return result
 
-
     def __setattr__(self, name, value):
         if name == 'node':
             object.__setattr__(self, name, value)
         else:
             self.set(name, value)
+
+    def __delattr__(self, name):
+        # FIXME: implement me
+        pass
+
+
+
+    #### A BaseObject also can work using a container API
+    ## NB: the rest of the methods (__iter__, __contains__, ...) are inherited from ObjectNode
+    def __getitem__(self, name):
+        return self.__getattr__(name)
+
+    def __setitem__(self, name, value):
+        return self.__setattr__(name, value)
+
+    def __delitem__(self, name):
+        # FIXME: implement me
+        pass
+
 
     def _apply_multi(self, func, name, value, validate):
         cls = self.__class__
