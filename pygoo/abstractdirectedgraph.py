@@ -177,6 +177,7 @@ class AbstractDirectedGraph(object):
         import cPickle as pickle
         import tempfile
         import subprocess
+        import os
 
         nodes, edges, classes = self.to_nodes_and_edges()
         fid, filename = tempfile.mkstemp(suffix = '.png')
@@ -212,3 +213,5 @@ class AbstractDirectedGraph(object):
             subprocess.Popen([ 'gwenview', filename ], stdout = subprocess.PIPE, stderr = subprocess.PIPE).communicate()
         else:
             subprocess.Popen([ 'open', filename ], stdout = subprocess.PIPE, stderr = subprocess.PIPE).communicate()
+
+        os.remove(filename)
