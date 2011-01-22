@@ -1,12 +1,11 @@
 from setuptools import setup, find_packages
 import sys, os
+import pygoo # for pygoo.__version__
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.txt')).read()
 NEWS = open(os.path.join(here, 'NEWS.txt')).read()
 
-
-version = '0.1.2'
 
 install_requires = [
     # List your project dependencies here.
@@ -16,7 +15,7 @@ install_requires = [
 
 
 setup(name = 'pygoo',
-      version = version,
+      version = pygoo.__version__,
       description = "PyGoo is an Object-Graph mapper, similar to SQLAlchemy but for graph DBs",
       long_description = README + '\n\n' + NEWS,
       classifiers = [], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
