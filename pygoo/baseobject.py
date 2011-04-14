@@ -305,6 +305,9 @@ class BaseObject(object):
         # FIXME: this could lead to cycles or very long chained __eq__ calling on properties
         return self.explicit_items() == other.explicit_items()
 
+    def __hash__(self):
+        return hash(self.node)
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
