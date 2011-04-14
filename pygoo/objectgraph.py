@@ -279,12 +279,13 @@ class ObjectGraph(AbstractDirectedGraph):
         else:
             raise TypeError('ObjectGraph.find_node: Invalid node type: %s' % node_type)
 
-        for node in self.nodes_from_class(node_type) if node_type else self.nodes():
+        for node in nodes:
             # TODO: should this go before or after the properties checking? Which is faster in general?
             try:
                 if not valid_node(node):
                     continue
-            except:
+            except Exception, e:
+                log.warning('valid_node returned an exception: %s' % e)
                 continue
 
             valid = True
