@@ -208,12 +208,17 @@ class BaseObject(object):
         #if not (self.node.isinstance(self.__class__) or
         #        (self.node._graph._dynamic and self.node.isValidInstance(self.__class__))):
         if not self.node.isinstance(self.__class__):
+            # create the error message before we delete the node, as we might remove some information
+            # by unlinking other nodes (eg: for an episode node, the delete_node will remove the link
+            # to the series if it had one)
+            msg = self.node.invalid_properties(self.__class__)
+
             # if we just created the node and it is invalid, we need to remove it
             if created:
                 self.node.graph().delete_node(self.node)
 
             raise TypeError("Cannot instantiate a valid instance of %s because:\n%s" %
-                            (self.__class__.__name__, self.node.invalid_properties(self.__class__)))
+                            (self.__class__.__name__, msg))
 
 
 
