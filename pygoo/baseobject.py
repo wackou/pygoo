@@ -258,7 +258,10 @@ class BaseObject(object):
             self.set(name, value)
 
     def __delattr__(self, name):
-        # FIXME: implement me
+        if name in self.node.literal_keys():
+            del self.node._props[name] # FIXME: this is only valid for MemoryObjectNodes (no Neo4jNode)...
+
+        # FIXME: implement me completely (ie: for links too)
         pass
 
 
@@ -272,8 +275,7 @@ class BaseObject(object):
         return self.__setattr__(name, value)
 
     def __delitem__(self, name):
-        # FIXME: implement me
-        pass
+        return self.__delattr__(name)
 
 
     def _apply_multi(self, func, name, value, validate):

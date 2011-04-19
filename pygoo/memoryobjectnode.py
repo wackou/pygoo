@@ -85,6 +85,8 @@ class MemoryObjectNode(ObjectNode):
     def set_literal(self, name, value):
         self._props[name] = value
 
+    # FIXME: need to implement del_literal here
+
     def literal_keys(self):
         return (k for k, v in self._props.items() if is_literal(v))
 
