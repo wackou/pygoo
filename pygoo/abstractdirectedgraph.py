@@ -21,7 +21,7 @@
 import sys
 import logging
 
-log = logging.getLogger('pygoo.AbstractDirectedGraph')
+log = logging.getLogger(__name__)
 
 # Nice & clean enum implementation by Gabriel Genellina, MIT licensed
 # as found at http://code.activestate.com/recipes/577024-yet-another-enum-for-python/

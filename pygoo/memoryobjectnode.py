@@ -24,7 +24,7 @@ from pygoo.utils import tolist, toresult, is_literal, to_iterator
 from pygoo import ontology
 import logging
 
-log = logging.getLogger('pygoo.MemoryObjectNode')
+log = logging.getLogger(__name__)
 
 class MemoryObjectNode(ObjectNode):
 
@@ -169,4 +169,3 @@ class MemoryObjectNode(ObjectNode):
         else:
             # no need to do anything
             pass
-

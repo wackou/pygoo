@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from neo4j import NeoService
+from neo4jrestclient.client import GraphDatabase
 import subprocess, glob
 import logging
 
-log = logging.getLogger('pygoo.Neo4j')
+log = logging.getLogger(__name__)
 
 
 dirname = None
@@ -43,7 +43,8 @@ def open(dbpath):
         raise RuntimeError("A Neo4j database is already open. Please close it before opening a new one.")
 
     dirname = dbpath
-    graph = NeoService(dbpath, jvm = default_jvm())
+    graph = GraphDatabase("http://localhost:7474/db/data/")
+    #NeoService(dbpath, jvm = default_jvm())
     transaction = graph.transaction
 
 

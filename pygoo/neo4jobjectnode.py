@@ -25,7 +25,7 @@ from pygoo.utils import toresult
 import neo
 import logging
 
-log = logging.getLogger('pygoo.Neo4jObjectNode')
+log = logging.getLogger(__name__)
 
 
 # SYNC can take 2 values:

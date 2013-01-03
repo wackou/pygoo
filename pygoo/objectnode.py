@@ -27,7 +27,7 @@ import types
 import weakref
 import logging
 
-log = logging.getLogger('pygoo.ObjectNode')
+log = logging.getLogger(__name__)
 
 
 

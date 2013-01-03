@@ -24,7 +24,7 @@ from pygoo import ontology
 import types
 import logging
 
-log = logging.getLogger('pygoo.BaseObject')
+log = logging.getLogger(__name__)
 
 
 def get_node(node):

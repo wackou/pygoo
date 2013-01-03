@@ -20,7 +20,7 @@
 
 import logging
 
-log = logging.getLogger('pygoo.AbstractNode')
+log = logging.getLogger(__name__)
 
 
 

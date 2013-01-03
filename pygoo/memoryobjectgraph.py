@@ -24,7 +24,7 @@ from pygoo.memoryobjectnode import MemoryObjectNode
 from pygoo.objectgraph import ObjectGraph
 import logging
 
-log = logging.getLogger('pygoo.MemoryObjectGraph')
+log = logging.getLogger(__name__)
 
 
 class MemoryObjectGraph(ObjectGraph):
@@ -65,4 +65,3 @@ class MemoryObjectGraph(ObjectGraph):
     def __setstate__(self, state):
         self._nodes = set()
         super(MemoryObjectGraph, self).__setstate__(state)
-

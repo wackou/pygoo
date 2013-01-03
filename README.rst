@@ -11,3 +11,5 @@ with an underlying database but all the data is kept in memory.
 are allowed
 
 .. _`Neo4j`: http://neo4j.org
+
+TODO: OneToMany is in fact OrderedList or UnorderedList (Set)

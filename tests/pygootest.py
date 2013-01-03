@@ -18,17 +18,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# import unittest and everything from pygoo
-from unittest import TestCase
+from unittest import *
 from pygoo import *
-
-# import potentially useful modules for the tests (which will import * from this file)
+from pygoo.slogging import setupLogging
+import logging
 import os
 
-# we don't want to be too verbose in tests
-import logging
-logging.getLogger('pygoo').setLevel(logging.WARNING)
+MAIN_LOGGING_LEVEL = logging.INFO
+
+setupLogging()
+logging.getLogger().setLevel(MAIN_LOGGING_LEVEL)
+logging.getLogger('pygoo.ontology').setLevel(logging.WARNING)
 
 # before starting any tests, save pygoo's media ontology in case we mess with it and need it again later
 from mediaontology import *
 ontology.save_current_ontology('media')
+
+def allTests(testClass):
+    return TestLoader().loadTestsFromTestCase(testClass)

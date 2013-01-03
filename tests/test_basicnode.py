@@ -211,3 +211,9 @@ class TestAbstractNode(TestCase):
         g.add_object(m2, recurse = Equal.OnUnique)
 
         self.assertEqual(len(g.find_all(Episode)), 1)
+
+
+suite = allTests(TestAbstractNode)
+
+if __name__ == '__main__':
+    TextTestRunner(verbosity=2).run(suite)

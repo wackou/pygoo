@@ -20,19 +20,21 @@
 
 from pygoo.memoryobjectgraph import MemoryObjectGraph
 from pygoo.neo4jobjectnode import Neo4jObjectNode
-import neo4j
+#import neo4j
 import neo
 import logging
 
-log = logging.getLogger('pygoo.Neo4jObjectGraph')
+log = logging.getLogger(__name__)
 
+"""
 class AllNodes(neo4j.Traversal):
     types = [
-        neo4j.Incoming._ingraph,
+        #neo4j.Incoming._ingraph,
         ]
-    order = neo4j.DEPTH_FIRST
-    stop = neo4j.STOP_AT_END_OF_GRAPH
-    returnable = neo4j.RETURN_ALL_BUT_START_NODE
+    #order = neo4j.DEPTH_FIRST
+    #stop = neo4j.STOP_AT_END_OF_GRAPH
+    #returnable = neo4j.RETURN_ALL_BUT_START_NODE
+"""
 
 def all_nodes():
     # FIXME: ATM returns neo nodes, not expected Neo4jObjectNodes

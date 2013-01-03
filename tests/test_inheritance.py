@@ -209,3 +209,8 @@ class TestInheritance(TestCase):
         b = g.B()
         self.assert_(A not in b.node._classes)
 
+
+suite = allTests(TestInheritance)
+
+if __name__ == '__main__':
+    TextTestRunner(verbosity=2).run(suite)

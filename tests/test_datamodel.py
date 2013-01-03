@@ -439,3 +439,9 @@ class TestObjectNode(TestCase):
         g.close()
 
         g2 = Neo4jObjectGraph('/tmp/gloub')
+
+
+suite = allTests(TestObjectNode)
+
+if __name__ == '__main__':
+    TextTestRunner(verbosity=2).run(suite)

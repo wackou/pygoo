@@ -25,7 +25,7 @@ from pygoo import ontology
 import types
 import logging
 
-log = logging.getLogger('pygoo.ObjectGraph')
+log = logging.getLogger(__name__)
 
 
 

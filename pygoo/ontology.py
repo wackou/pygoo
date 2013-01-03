@@ -22,7 +22,7 @@ import weakref
 import logging
 import sys
 
-log = logging.getLogger('pygoo.Ontology')
+log = logging.getLogger(__name__)
 
 # use dict here for fast text based access (when instantiating objects through a graph, for instance)
 _classes = {}

@@ -52,3 +52,7 @@ class TestMemory(TestCase):
         del g
         self.assertEqual(ontology._graphs.items(), [])
 
+suite = allTests(TestMemory)
+
+if __name__ == '__main__':
+    TextTestRunner(verbosity=2).run(suite)

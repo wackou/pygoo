@@ -119,3 +119,8 @@ class TestAdvancedGraph(TestCase):
         self.assertEqual(len(collection.find_all(Subtitle)), 1)
         self.assertEqual(len(collection.find_all(Media)), 2)
 
+
+suite = allTests(TestAdvancedGraph)
+
+if __name__ == '__main__':
+    TextTestRunner(verbosity=2).run(suite)
