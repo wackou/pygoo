@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import unicode_literals
 from pygootest import *
 
 class TestAbstractNode(TestCase):
@@ -64,15 +65,15 @@ class TestAbstractNode(TestCase):
         g = GraphClass()
 
         n = g.create_node()
-        n.set_literal('title', u'abc')
-        self.assertEqual(n.get_literal('title'), u'abc')
+        n.set_literal('title', 'abc')
+        self.assertEqual(n.get_literal('title'), 'abc')
         self.assertEqual(list(n.literal_keys()), [ 'title' ])
         self.assertEqual(list(n.edge_keys()), [])
 
         n2 = g.create_node()
         n.add_directed_edge('friend', n2)
         n2.add_directed_edge('friend', n)
-        self.assertEqual(n.get_literal('title'), u'abc')
+        self.assertEqual(n.get_literal('title'), 'abc')
         self.assertEqual(list(n.literal_keys()), [ 'title' ])
         self.assertEqual(list(n.edge_keys()), [ 'friend' ])
         self.assertEqual(list(n.outgoing_edge_endpoints('friend')), [ n2 ])
@@ -91,14 +92,14 @@ class TestAbstractNode(TestCase):
         g = ObjectGraphClass()
 
         n = g.create_node()
-        n.title = u'abc'
-        self.assertEqual(n.get_literal('title'), u'abc')
+        n.title = 'abc'
+        self.assertEqual(n.get_literal('title'), 'abc')
         self.assertEqual(list(n.literal_keys()), [ 'title' ])
         self.assertEqual(list(n.edge_keys()), [])
 
         n2 = g.create_node()
         n.friend = n2
-        self.assertEqual(n.title, u'abc')
+        self.assertEqual(n.title, 'abc')
         self.assertEqual(list(n.literal_keys()), [ 'title' ])
         self.assertEqual(list(n.edge_keys()), [ 'friend' ])
         self.assertEqual(list(n.friend), [ n2 ])
@@ -143,21 +144,21 @@ class TestAbstractNode(TestCase):
         g1 = GraphClass()
         g2 = GraphClass()
 
-        n1 = g1.BaseObject(n = u'n1', a = 23)
-        n2 = g1.NiceGuy(n = u'n2', friend = n1)
+        n1 = g1.BaseObject(n = 'n1', a = 23)
+        n2 = g1.NiceGuy(n = 'n2', friend = n1)
         self.assertEqual(n1.friendOf, n2)
 
         r2 = g2.add_object(n2)
-        r2.n = u'r2'
+        r2.n = 'r2'
         self.assertEqual(n1.friendOf, n2)
 
-        n3 = g1.NiceGuy(name = u'other node', friend = n1)
+        n3 = g1.NiceGuy(name = 'other node', friend = n1)
         r3 = g2.add_object(n3)
 
         # TODO: also try adding n2 after n3 is created
 
-        o1 = g1.BaseObject(n = u'o1')
-        o2 = g1.BaseObject(n = u'o2')
+        o1 = g1.BaseObject(n = 'o1')
+        o2 = g1.BaseObject(n = 'o2')
 
         old = n3.friend
         n3.friend = [ o1, o2 ]
@@ -166,7 +167,7 @@ class TestAbstractNode(TestCase):
         self.assertEqual(tolist(old.friendOf), [n2])
         self.assertEqual(old.friendOf, n2)
 
-        n4 = g1.NiceGuy(n = u'n4', friend = n3.friend)
+        n4 = g1.NiceGuy(n = 'n4', friend = n3.friend)
         self.assert_(o1 in n4.friend)
         self.assert_(o2 in n4.friend)
         self.assert_(n3 in o1.friendOf)
@@ -195,7 +196,7 @@ class TestAbstractNode(TestCase):
         g = MemoryObjectGraph()
 
         g1 = MemoryObjectGraph()
-        m1 = g1.Media(filename = 'a.avi',
+        m1 = g1.Video(filename = 'a.avi',
                       metadata = g1.Episode(series = g1.Series(title = 'A'),
                                             season = 1,
                                             episodeNumber = 1))

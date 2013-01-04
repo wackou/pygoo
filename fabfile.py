@@ -27,6 +27,7 @@ test_datamodel = TestTask('datamodel', 'ORM functionality')
 test_advancedgraph = TestTask('advancedgraph', 'advanced graph operations')
 test_inheritance = TestTask('inheritance', 'inheritance')
 test_memory = TestTask('memory', 'memory-backed graphs')
+test_ontology = TestTask('ontology', 'basic ontology functionality')
 
 @task
 def unittests():

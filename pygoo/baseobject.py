@@ -67,7 +67,7 @@ class OntologyClass(type):
                 dict(cls.reverse_lookup),
                 set(cls.valid),
                 set(cls.unique),
-                list(cls.order),
+                list(cls.display_order),
                 dict(cls.converters))
 
     def set_class_variables(cls, vars):
@@ -75,7 +75,7 @@ class OntologyClass(type):
         cls.reverse_lookup = dict(vars[1])
         cls.valid = set(vars[2])
         cls.unique = set(vars[3])
-        cls.order = set(vars[4])
+        cls.display_order = set(vars[4])
         cls.converters = set(vars[5])
 
 
@@ -100,22 +100,29 @@ class BaseObject(object):
                        'title': unicode
                        }
 
-    2- 'reverseLookup' which is a dict used to indicate the name to be used for the property name
-                       when following a relationship between objects in the other direction.
-                       ie: if Episode(...).series == Series('Scrubs'), then we define automatically
-                       a way to access the Episode() from the pointed to Series() object.
-                       with { 'series': 'episodes' }, we then have:
-                       Series('Scrubs').episodes = [ Episode(...), Episode(...) ]
-                       reverseLookup must be defined for each property which is a Node object
+    2- 'reverse_lookup' which is a dict used to indicate the name to be used for the property name
+                        when following a relationship between objects in the other direction.
+                        ie: if Episode(...).series == Series('Scrubs'), then we define automatically
+                        a way to access the Episode() from the pointed to Series() object.
+                        with { 'series': 'episodes' }, we then have:
+                        Series('Scrubs').episodes = [ Episode(...), Episode(...) ]
+                        reverse_lookup must be defined for each property which is a Node object
 
-    3- 'valid' which is the list of properties a node needs to have to be able to be considered
+    # FIXME: there should be a test for the default value
+    3- 'valid' (optional) list of properties a node needs to have to be able to be considered
                as a valid instance of this class
+               if valid is either the empty list or unspecified, all instances are considered valid
+               by default, this is the same as the keys from the 'schema' dict
 
-    4- 'unique' which is the list of properties that form a primary key
+    # FIXME: there should be a test for the default value
+    4- 'unique' (optional) list of properties that form a primary key
+                by default, this is the same as the 'valid' property
 
-    5- 'order' (optional) which is a list of properties you always want to see in front for debug msgs
-               by default, this will be set to the 'valid' variable
+    # FIXME: there should be a test for the default value
+    5- 'display_order' (optional) order in which the properties should be displayed
+                       by default, this will be set to the 'valid' variable
 
+    # FIXME: need to be tested too
     6- 'converters' (optional), which is a dictionary from property name to a pair of functions
                     that are able to serialize/deserialize this property to/from a unicode string.
 
@@ -147,7 +154,7 @@ class BaseObject(object):
     reverse_lookup = {}
     valid = []
     unique = []
-    order = []
+    display_order = []
     converters = {}
 
     # This variable works just like the 'schema' one, except that it only contains properties which have been defined
@@ -240,8 +247,19 @@ class BaseObject(object):
         # if the result is an ObjectNode, wrap it with the class it has been given in the class schema
         # if it was not in the class schema, simply returns an instance of BaseObject
         if isinstance(result, types.GeneratorType):
-            result_class = self.__class__.schema.get(name) or BaseObject
-            return toresult([ result_class(basenode = n) for n in result ])
+            # FIXME: should rather use ResultClass.make_virtual() or sth similar to
+            # promote automatically the node to the class it has instead of getting
+            # the class from the schema
+            ResultClass = self.__class__.schema.get(name) or BaseObject
+            def result_iterator():
+                for node in result:
+                    yield ResultClass(basenode=node)
+
+            ontology.print_class(self.__class__)
+            print 'REL %s =' % name, self.__class__.schema._relations.get(name)
+            if self.__class__.schema._relations.get(name) == ontology.ONE_TO_ONE:
+                return next(result_iterator())
+            return result_iterator
 
         # FIXME: better test here (although if the graph is consistent (ie: always returns generators) it shouldn't be necessary)
         #elif isinstance(result, list) and isinstance(result[0], AbstractNode):
@@ -249,6 +267,8 @@ class BaseObject(object):
         #    return [ resultClass(basenode = node) for node in result ]
 
         else:
+            # FIXME: remove me later
+            assert(not isinstance(result, (list, set)))
             return result
 
     def __setattr__(self, name, value):
@@ -319,28 +339,31 @@ class BaseObject(object):
         return not self.__eq__(other)
 
     def __str__(self):
-        return self.node.to_string(cls = self.__class__, default = BaseObject).encode('utf-8')
+        return self.node.to_string(cls=self.__class__, default=BaseObject).encode('utf-8')
 
     def __repr__(self):
         return self.__str__()
+
+    def display_string(self):
+        return str(self)
 
     def schema_keys(self):
         return self.__class__.schema.keys()
 
     def schema_items(self):
-        return [ x for x in self.items() if x[0] in self.__class__.schema ]
+        return (x for x in self.items() if x[0] in self.__class__.schema)
 
     def explicit_schema_keys(self):
-        return [ x for x in self.schema_keys() if x not in self.__class__.schema._implicit ]
+        return (x for x in self.schema_keys() if x not in self.__class__.schema._implicit)
 
     def explicit_schema_items(self):
-        return [ x for x in self.schema_items() if x[0] not in self.__class__.schema._implicit ]
+        return (x for x in self.schema_items() if x[0] not in self.__class__.schema._implicit)
 
     def explicit_keys(self):
-        return [ x for x in self.keys() if x not in self.__class__.schema._implicit ]
+        return (x for x in self.keys() if x not in self.__class__.schema._implicit)
 
     def explicit_items(self):
-        return [ x for x in self.items() if x[0] not in self.__class__.schema._implicit ]
+        return (x for x in self.items() if x[0] not in self.__class__.schema._implicit)
 
     @classmethod
     def class_name(cls):
@@ -384,7 +407,7 @@ class BaseObject(object):
         result = []
         property_names = list(self.node.keys())
 
-        for p in self.__class__.order:
+        for p in self.__class__.display_order:
             if p in property_names:
                 result.append(p)
                 property_names.remove(p)

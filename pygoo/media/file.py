@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # PyGoo - An Object-Graph mapper
-# Copyright (c) 2010 Nicolas Wack <wackou@gmail.com>
+# Copyright (c) 2013 Nicolas Wack <wackou@gmail.com>
 #
 # PyGoo is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,25 +18,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from unittest import *
-from pygoo import *
-from pygoo import ontology
-from pygoo.slogging import setupLogging
-import logging
-import os
+from __future__ import unicode_literals
+from pygoo.baseobject import BaseObject
 
-MAIN_LOGGING_LEVEL = logging.DEBUG
+class File(BaseObject):
+    """Represent a physical file on the hard disk."""
 
-setupLogging()
-logging.getLogger().setLevel(MAIN_LOGGING_LEVEL)
-logging.getLogger('pygoo.ontology').setLevel(logging.INFO)
+    schema = { 'filename': unicode,
+               'sha1': unicode,
+               # TODO: needs to have datetime
+               # FIXME: why do we need this again?
+               'lastAccessed': float, # seconds since the epoch
 
-# FIXME: remove this after fixing guessit
-logging.getLogger('guessit.language').setLevel(logging.WARNING)
+               }
 
-# before starting any tests, save pygoo's media ontology in case we mess with it and need it again later
-from pygoo.media import *
-ontology.save_current_ontology('media')
+    valid = [ 'filename' ]
 
-def allTests(testClass):
-    return TestLoader().loadTestsFromTestCase(testClass)
+
+    # TODO: make a property
+    def ext(self):
+        return self.filename.split('.')[-1]

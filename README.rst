@@ -1,5 +1,5 @@
 PyGoo
-==========================
+=====
 
 PyGoo is an object-mapper for graph databases, such as `Neo4j`_.
 It achieves the same goal as other object-mappers such as SQLAlchemy,
