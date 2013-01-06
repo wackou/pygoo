@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import unicode_literals
 from pygootest import *
 
 class TestAdvancedGraph(TestCase):
@@ -34,24 +35,20 @@ class TestAdvancedGraph(TestCase):
 
         # initial import
         tmp1 = MemoryObjectGraph()
-        s = tmp1.Series(title = 'Monk')
-        ep = tmp1.Episode(series = s, season = 1, episodeNumber = 1, title = 'ep 1x01')
-        epfile = tmp1.Media(metadata = ep, filename = 'ep_1x01.avi')
+        s = tmp1.Series(title='Monk')
+        ep = tmp1.Episode(series=s, season=1, episodeNumber=1, title='ep 1x01')
+        epfile = tmp1.File(video=ep, filename='ep_1x01.avi')
 
-        sub = tmp1.Subtitle(metadata = ep, language = 'en')
-        subfile = tmp1.Media(metadata = sub, filename = 'ep_1x01.en.srt')
+        sub = tmp1.Subtitle(video=ep, language='en')
+        subfile = tmp1.File(subtitle=sub, filename='ep_1x01.en.srt')
+
 
         #tmp1.display_graph()
 
         collection = MemoryObjectGraph()
-        epfilec = collection.add_object(epfile, recurse = Equal.OnUnique)
+        epfilec = collection.add_object(ep, recurse=Equal.OnUnique)
 
-        print epfile.node.graph, epfile
-        print epfilec.node.graph, epfilec
-
-        print epfilec.metadata
-
-        print 'from collec', collection.find_node(epfilec.node, cmp = Equal.OnUnique)
+        print 'from collec', collection.find_node(epfilec.node, cmp=Equal.OnUnique)
         #epfilec2 = collection.Media(metadata = epfilec.metadata, filename = 'ep_1x01.avi', other = 'different, but same unique values')
         #collection.display_graph()
         #n1 = collection.find_node(epfilec.node, cmp = Equal.OnUnique)
@@ -65,59 +62,53 @@ class TestAdvancedGraph(TestCase):
         #self.assertEqual(n1, n2)
         #self.assert_(n3 is not None)
 
-        #collection.display_graph()
+        #collection.display_graph('before')
+        collection.add_object(sub, recurse=Equal.OnUnique)
 
-        collection.add_object(subfile, recurse = Equal.OnUnique)
-
-        print 'collec 1'
-        #collection.display_graph()
+        #collection.display_graph('collec1')
 
         self.assertEqual(len(collection.find_all(Episode)), 1)
         self.assertEqual(len(collection.find_all(Subtitle)), 1)
-        self.assertEqual(len(collection.find_all(Media)), 2)
+        self.assertEqual(len(collection.find_all(File)), 2)
 
         # second import, same objects
         tmp2 = MemoryObjectGraph()
-        s = tmp2.Series(title = 'Monk')
-        ep = tmp2.Episode(series = s, season = 1, episodeNumber = 1, title = 'ep 1x01')
-        epfile = tmp2.Media(metadata = ep, filename = 'ep_1x01.avi')
+        s = tmp2.Series(title='Monk')
+        ep = tmp2.Episode(series=s, season=1, episodeNumber=1, title='ep 1x01')
+        epfile = tmp2.File(video=ep, filename='ep_1x01.avi')
 
-        sub = tmp2.Subtitle(metadata = ep, language = 'en')
-        subfile = tmp2.Media(metadata = sub, filename = 'ep_1x01.en.srt')
+        sub = tmp2.Subtitle(video=ep, language='en')
+        subfile = tmp2.File(subtitle=sub, filename='ep_1x01.en.srt')
 
         #tmp1.display_graph()
 
-        collection.add_object(epfile, recurse = Equal.OnUnique)
+        collection.add_object(epfile, recurse=Equal.OnUnique)
 
         self.assertEqual(len(collection.find_all(Episode)), 1)
         self.assertEqual(len(collection.find_all(Subtitle)), 1)
-        self.assertEqual(len(collection.find_all(Media)), 2)
+        self.assertEqual(len(collection.find_all(File)), 2)
 
-        print 'collec 2 + epfile'
-        #collection.display_graph()
+        #collection.display_graph('collec 2 + epfile')
 
-        collection.add_object(subfile, recurse = Equal.OnUnique)
+        collection.add_object(subfile, recurse=Equal.OnUnique)
 
         self.assertEqual(len(collection.find_all(Episode)), 1)
         self.assertEqual(len(collection.find_all(Subtitle)), 1)
-        self.assertEqual(len(collection.find_all(Media)), 2)
+        self.assertEqual(len(collection.find_all(File)), 2)
 
-        print 'collec 2 + subfile'
-        #collection.display_graph()
+        #collection.display_graph('collec 2 + subfile')
 
-        print 'collec 2 + ep md'
-        collection.add_object(ep, recurse = Equal.OnUnique)
-        #collection.display_graph()
+        collection.add_object(ep, recurse=Equal.OnUnique)
+        #collection.display_graph('collec 2 + ep md')
         self.assertEqual(len(collection.find_all(Episode)), 1)
         self.assertEqual(len(collection.find_all(Subtitle)), 1)
-        self.assertEqual(len(collection.find_all(Media)), 2)
+        self.assertEqual(len(collection.find_all(File)), 2)
 
-        print 'collec 2 + sub md'
-        collection.add_object(sub, recurse = Equal.OnUnique)
-        #collection.display_graph()
+        collection.add_object(sub, recurse=Equal.OnUnique)
+        #collection.display_graph('collec 2 + sub md')
         self.assertEqual(len(collection.find_all(Episode)), 1)
         self.assertEqual(len(collection.find_all(Subtitle)), 1)
-        self.assertEqual(len(collection.find_all(Media)), 2)
+        self.assertEqual(len(collection.find_all(File)), 2)
 
 
 suite = allTests(TestAdvancedGraph)

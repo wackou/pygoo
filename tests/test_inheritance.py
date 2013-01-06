@@ -19,15 +19,9 @@
 #
 
 
+from __future__ import unicode_literals
 from pygootest import *
 
-
-def print_class(cls):
-    print 'class: %s' % cls.__name__
-    print 'parent: %s' % cls.parent_class().__name__
-    print 'schema', cls.schema
-    print 'implicit', cls.schema._implicit
-    print 'rlookup', cls.reverse_lookup
 
 class TestInheritance(TestCase):
 
@@ -90,7 +84,7 @@ class TestInheritance(TestCase):
 
             valid = [ 'filename' ]
             unique = [ 'filename' ]
-            reverse_lookup = { 'metadata': 'files' }
+            reverse_lookup = { 'metadata': ['files'] }
 
         class Series(Metadata):
             schema = { 'title': unicode,
@@ -121,9 +115,9 @@ class TestInheritance(TestCase):
             reverse_lookup = { 'metadata': 'subtitles' }
 
         g = MemoryObjectGraph()
-        s = g.Series(title = 'glou')
-        ep = g.Episode(series = s, season = 1, episodeNumber = 3)
-        file = g.Media(filename = '/tmp/gloubi-boulga', metadata = ep)
+        s = g.Series(title='glou')
+        ep = g.Episode(series=s, season=1, episodeNumber=3)
+        file = g.Media(filename='/tmp/gloubi-boulga', metadata=ep)
 
         subs = []
         subs += [ g.Subtitle(metadata = file.metadata,

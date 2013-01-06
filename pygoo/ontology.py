@@ -48,10 +48,30 @@ except ImportError:
 
 # Relation types
 ONE_TO_ONE = 0
-ORDERED_MANY_TO_ONE = 1
-UNORDERED_MANY_TO_ONE = 2
-ORDERED_ONE_TO_MANY = 3
-UNORDERED_ONE_TO_MANY = 4
+ORDERED_MANY_TO_MANY = 1
+UNORDERED_MANY_TO_MANY = 2
+ORDERED_MANY_TO_ONE = 3
+UNORDERED_MANY_TO_ONE = 4
+ORDERED_ONE_TO_MANY = 5
+UNORDERED_ONE_TO_MANY = 6
+
+def reciprocal_relation(rel):
+    if rel == ONE_TO_ONE:
+        return ONE_TO_ONE
+    elif rel == ORDERED_MANY_TO_MANY:
+        return ORDERED_MANY_TO_MANY
+    elif rel == UNORDERED_MANY_TO_MANY:
+        return UNORDERED_MANY_TO_MANY
+    elif rel == ORDERED_MANY_TO_ONE:
+        return ORDERED_ONE_TO_MANY
+    elif rel == UNORDERED_MANY_TO_ONE:
+        return UNORDERED_ONE_TO_MANY
+    elif rel == ORDERED_ONE_TO_MANY:
+        return ORDERED_MANY_TO_ONE
+    elif rel == UNORDERED_ONE_TO_MANY:
+        return UNORDERED_MANY_TO_ONE
+    else:
+        raise ValueError('Invalid relation: %s' % rel)
 
 
 class Schema(dict):
@@ -61,6 +81,12 @@ class Schema(dict):
         if args and isinstance(args[0], Schema):
             self._implicit = set(args[0]._implicit)
             self._relations = dict(args[0]._relations)
+
+    def prop_cls(self, name):
+        cls = self.get(name)
+        if isinstance(cls, (list, set)):
+            cls = next(iter(cls))
+        return cls
 
 # dict of name to ontologies
 # ontologies are (_classes, class variables)
@@ -139,6 +165,11 @@ def validate_class_definition(cls, attrs):
     if not issubclass(cls, BaseObject):
         raise TypeError, "'%s' needs to derive from ontology.BaseObject or one of its subclasses" % cls.__name__
 
+    def is_baseobject(ctype):
+        if isinstance(ctype, (list, set)):
+            return issubclass(next(iter(ctype)), BaseObject)
+        return issubclass(ctype, BaseObject)
+
     parent = cls.parent_class()
 
     def check_present(cls, var, ctype, default_value=True):
@@ -204,42 +235,50 @@ def validate_class_definition(cls, attrs):
         # (Un)OrderedOneToMany relations
         # Note: ManyToOne relations do not appear in the schema definition, but
         #       in the reverse_lookup variable definition
-        print 'CTYPE0', type(ctype), ctype
-        print 'RL0', cls.reverse_lookup.get(name)
+        rname = cls.reverse_lookup.get(name) # None if not defined
         if isinstance(ctype, (list, set)):
             if len(ctype) != 1:
                 error("Attribute '%s' should not define more than one type in a list or set" % name)
-            if not is_valid_type(list(ctype)[0]):
-                error("Attribute '%s' should define a list or set of an otherwise compatible type (invalid: %s)" % (name, type(list(ctype)[0])))
-            # FIXME: check that reverse_lookup doesn't also specify a MANY_TO_ONE relationship
+            # TODO: also accept lists and sets of literals
+            #if not is_valid_type(list(ctype)[0]):
+            if not is_baseobject(ctype):
+                error("Attribute '%s' should define a list or set of an otherwise compatible type (invalid: %s)" % (name, type(next(iter(ctype)))))
 
+            # check for compatible ordered/unordered many-to-many relations
+            if ((isinstance(ctype, list) and isinstance(rname, set)) or
+                (isinstance(ctype, set) and isinstance(rname, list))):
+                error("Attribute '%s' defines an incompatible many-to-many relation: %s - %s" % (name, ctype, rname))
 
+        # check now that reverse_lookup entries are also valid before
+        # updating the relation types in the class schema
+        if isinstance(rname, (list, set)):
+            if len(rname) != 1:
+                error("Reverse attribute for '%s' should not define more than one relation name in a list or set" % name)
+            if not isinstance(list(rname)[0], unicode_text_type):
+                error("Attribute '%s' should define a list or set of a relation name (unicode string) (invalid: %s)" % (name, type(next(iter(rname)))))
 
-        print 'CLS', cls
-        print 'NAME', name
-        print 'CTYPE', type(ctype), ctype
-        print 'RL', cls.reverse_lookup.get(name)
+        # determine relation types and store them in class schema
         if isinstance(ctype, list):
-            schema._relations[name] = ORDERED_ONE_TO_MANY
-            continue
+            if isinstance(rname, list):
+                cls.schema._relations[name] = ORDERED_MANY_TO_MANY
+            else:
+                cls.schema._relations[name] = ORDERED_ONE_TO_MANY
         elif isinstance(ctype, set):
-            schema._relations[name] = UNORDERED_ONE_TO_MANY
-            continue
-        elif isinstance(cls.reverse_lookup.get(name), list):
-            schema._relations[name] = ORDERED_MANY_TO_ONE
-            continue
-        elif isinstance(cls.reverse_lookup.get(name), set):
-            schema._relations[name] = UNORDERED_MANY_TO_ONE
-            continue
-
-        # OneToOne relation or literal value
-        if isinstance(ctype, type) and is_valid_type(ctype):
-            print '____', name, ctype
-            if issubclass(ctype, BaseObject):
-                schema._relations[name] = ONE_TO_ONE
-            continue
-
-        error("Attribute '%s' could not be identified as a valid type: %s" % (name, ctype))
+            if isinstance(rname, set):
+                cls.schema._relations[name] = UNORDERED_MANY_TO_MANY
+            else:
+                cls.schema._relations[name] = UNORDERED_ONE_TO_MANY
+        else:
+            if isinstance(rname, list):
+                cls.schema._relations[name] = ORDERED_MANY_TO_ONE
+            elif isinstance(rname, set):
+                cls.schema._relations[name] = UNORDERED_MANY_TO_ONE
+            else:
+                if isinstance(ctype, type) and is_valid_type(ctype):
+                    if is_baseobject(ctype):
+                        cls.schema._relations[name] = ONE_TO_ONE
+                else:
+                    error("Attribute '%s' could not be identified as a valid type: %s" % (name, ctype))
 
 
     # all the properties defined as subclasses of BaseObject need to have an
@@ -253,11 +292,6 @@ def validate_class_definition(cls, attrs):
     cls.reverse_lookup = rlookup
 
     # check that we have reverse_lookup names for all needed properties
-    def is_baseobject(ctype):
-        if isinstance(ctype, (list, set)):
-            return issubclass(list(ctype)[0], BaseObject)
-        return issubclass(ctype, BaseObject)
-
     object_props = [ name for name, ctype in cls.schema.items()
                      if is_baseobject(ctype) and name not in cls.schema._implicit ]
 
@@ -270,26 +304,12 @@ def validate_class_definition(cls, attrs):
 
     # directly update the schema for other classes where needed
     # TODO: make sure we don't overwrite anything (should have been done in the validate_class_definition, right?)
-    # FIXME: deal with OneToMany relationships (where the reverse_lookup is either of type list or set
     for prop, rprop in orig_reverse_lookup.items():
-        # FIXME: check we don't define a ONE_TO_MANY and MANY_TO_ONE relation at the same time
         rpname = list(rprop)[0] if isinstance(rprop, (list, set)) else rprop
         for c in subclasses(cls.schema[prop]):
             c.schema._implicit.add(rpname)
             c.schema[rpname] = cls
-            print 'ADDING TO CLS', c.__name__
-            print '  CSCHEMA', rpname, cls.schema.get(prop)
-            if isinstance(cls.schema[prop], list):
-                c.schema._relations[rpname] = ORDERED_MANY_TO_ONE
-            elif isinstance(cls.schema[prop], set):
-                c.schema._relations[rpname] = UNORDERED_MANY_TO_ONE
-            elif isinstance(rprop, list):
-                c.schema._relations[rpname] = ORDERED_ONE_TO_MANY
-            elif isinstance(rprop, set):
-                c.schema._relations[rpname] = UNORDERED_ONE_TO_MANY
-            else:
-                c.schema._relations[rpname] = ONE_TO_ONE
-            print '- written', c.schema._relations[rpname]
+            c.schema._relations[rpname] = reciprocal_relation(cls.schema._relations[prop])
             c.reverse_lookup[rpname] = prop
 
 
@@ -299,6 +319,9 @@ def validate_class_definition(cls, attrs):
 
     check_schema_subset(cls, 'unique')
     check_parent_superset(cls, 'unique')
+    if not cls.unique:
+        # FIXME: should only do this when cls.unique is unspecified, not when it is set()
+        cls.unique = cls.valid
 
     check_schema_subset(cls, 'display_order')
 

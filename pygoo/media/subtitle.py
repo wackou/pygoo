@@ -26,6 +26,11 @@ from pygoo.media import Video, File
 from os.path import splitext
 from fnmatch import fnmatch
 
+def str2lang(s):
+    if isinstance(s, basestring):
+        return Language(s)
+    return s
+
 class Subtitle(BaseObject):
     """Object used for representing subtitles.
 
@@ -43,6 +48,7 @@ class Subtitle(BaseObject):
 
     valid = [ 'video' ]
     unique = [ 'video', 'language' ]
+    converters = { 'language': str2lang }
 
 
     @staticmethod

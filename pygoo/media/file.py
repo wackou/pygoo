@@ -34,6 +34,9 @@ class File(BaseObject):
 
     valid = [ 'filename' ]
 
+    # FIXME: unique should default to valid
+    #unique = [ 'filename']
+
 
     # TODO: make a property
     def ext(self):

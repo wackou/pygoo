@@ -24,10 +24,9 @@ from pygootest import *
 class TestOntology(TestCase):
 
     def setUp(self):
-        print 'SETUP CLEAR ONTOLOGY'
         ontology.clear()
 
-    def atestBasicOntology(self):
+    def testBasicOntology(self):
         class A(BaseObject):
             schema = { 'title': unicode }
             valid = ['title']
@@ -58,7 +57,7 @@ class TestOntology(TestCase):
             reverse_lookup = { 'friend': 'friend' }
             valid = schema.keys()
 
-        ontology.print_class(F)
+        #ontology.print_class(F)
 
         self.assertEqual(issubclass(A, BaseObject), True)
         self.assertEqual(issubclass(B, A), True)
@@ -78,7 +77,7 @@ class TestOntology(TestCase):
 
         # test instance creation
         g = MemoryObjectGraph()
-        a = g.A(title = u'Scrubs', epnum = 5)
+        a = g.A(title='Scrubs', epnum=5)
 
         self.assertEqual(type(a), A)
         self.assertEqual(a.__class__, A)
@@ -86,7 +85,7 @@ class TestOntology(TestCase):
         self.assertEqual(a.__class__.__name__, 'A')
 
 
-    def atestBaseObject(self, GraphClass = MemoryObjectGraph):
+    def testBaseObject(self, GraphClass = MemoryObjectGraph):
         class NiceGuy(BaseObject):
             schema = { 'friend': BaseObject }
             valid = [ 'friend' ]
@@ -105,25 +104,27 @@ class TestOntology(TestCase):
         g1 = GraphClass()
         g2 = GraphClass()
 
-        n1 = g1.BaseObject(n = 'n1', a = 23)
-        n2 = g1.NiceGuy(n = 'n2', friend = n1)
+        n1 = g1.BaseObject(n='n1', a=23)
+        n2 = g1.NiceGuy(n='n2', friend=n1)
         self.assertEqual(n1.friendOf, n2)
 
         r2 = g2.add_object(n2)
         r2.n = 'r2'
         self.assertEqual(n1.friendOf, n2)
 
+
     def testMediaOntologyRelations(self):
-        """Test whether the ONE_TO_ONE and ONE_TO_MANY relations work correctly."""
+        """Test whether the ONE_TO_ONE, ONE_TO_MANY, MANY_TO_ONE
+        and MANY_TO_MANY relations work correctly."""
 
         ontology.import_ontology('video')
-        ontology.print_classes()
+        #ontology.print_classes()
 
         self.assertEqual(ontology.ORDERED_ONE_TO_MANY, Video.schema._relations['files'])
         self.assertEqual(ontology.ORDERED_MANY_TO_ONE, File.schema._relations['video'])
 
         ontology.import_ontology('media')
-        ontology.print_classes()
+        #ontology.print_classes()
 
         # Video relations
         self.assertEqual(ontology.ORDERED_ONE_TO_MANY, Video.schema._relations['files'])
@@ -146,6 +147,21 @@ class TestOntology(TestCase):
         self.assertEqual(ontology.ONE_TO_ONE, Subtitle.schema._relations['video'])
         self.assertEqual(ontology.ORDERED_ONE_TO_MANY, Series.schema._relations['episodes'])
         self.assertEqual(ontology.ORDERED_MANY_TO_ONE, Episode.schema._relations['series'])
+
+
+        class NiceGuy(BaseObject):
+            schema = { 'friend': [BaseObject],
+                       'buddy': {BaseObject} }
+            valid = [ 'friend' ]
+            reverse_lookup = { 'friend': ['friendOf'],
+                               'buddy': {'buddyOf'} }
+
+        self.assertEqual(ontology.ORDERED_MANY_TO_MANY, NiceGuy.schema._relations['friend'])
+        self.assertEqual(ontology.ORDERED_MANY_TO_MANY, BaseObject.schema._relations['friendOf'])
+        self.assertEqual(ontology.UNORDERED_MANY_TO_MANY, NiceGuy.schema._relations['buddy'])
+        self.assertEqual(ontology.UNORDERED_MANY_TO_MANY, BaseObject.schema._relations['buddyOf'])
+
+        #ontology.print_classes()
 
     def registerMediaOntology(self):
         # use pygoo.media

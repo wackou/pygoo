@@ -19,7 +19,7 @@
 #
 
 __version__ = '0.1-dev'
-__all__ = ['MemoryObjectGraph', 'Equal', 'BaseObject', 'tolist', 'toresult']
+__all__ = ['MemoryObjectGraph', 'Equal', 'BaseObject']
 
 # Do python3 detection before importing any other module, to be sure that
 # it will then always be available
@@ -80,4 +80,3 @@ log.addHandler(NullHandler())
 from pygoo.memoryobjectgraph import MemoryObjectGraph
 from pygoo.objectgraph import Equal
 from pygoo.baseobject import BaseObject
-from pygoo.utils import tolist, toresult

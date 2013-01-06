@@ -18,13 +18,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import unicode_literals
 from pygoo.abstractnode import AbstractNode
 from pygoo.abstractdirectedgraph import Equal
 from pygoo.baseobject import BaseObject
-from pygoo.utils import tolist, toresult, is_of, multi_is_instance, is_literal
+from pygoo.utils import is_of, multi_is_instance, is_literal
 from pygoo import ontology
 import types
 import weakref
+import collections
 import logging
 
 log = logging.getLogger(__name__)
@@ -83,7 +85,7 @@ class ObjectNode(AbstractNode):
         self.graph = weakref.ref(graph)
 
         for prop, value, reverse_name in props:
-            self.set(prop, value, reverse_name, validate = False)
+            self.set(prop, value, reverse_name, validate=False)
 
         self.update_valid_classes()
 
@@ -97,15 +99,18 @@ class ObjectNode(AbstractNode):
     def has_valid_properties(self, cls, props):
         for prop in props:
             value = self.get(prop)
+            prop_cls = cls.schema[prop]
+            if isinstance(prop_cls, (list, set)):
+                prop_cls = next(iter(prop_cls))
 
-            if isinstance(value, types.GeneratorType):
+            if isinstance(value, collections.Iterator):
                 value = list(value)
                 # TODO: we might need value.isValidInstance in some cases
-                if value != [] and not value[0].isinstance(cls.schema[prop]):
+                if value != [] and not value[0].isinstance(prop_cls):
                     return False
             else:
                 # TODO: here we might want to check if value is None and allow it or not
-                if type(value) != cls.schema[prop]:
+                if type(value) != prop_cls:
                     return False
 
         return True
@@ -119,7 +124,7 @@ class ObjectNode(AbstractNode):
                 continue
 
             # FIXME: link type checking doesn't work
-            if isinstance(getattr(self, prop), types.GeneratorType):
+            if isinstance(getattr(self, prop), collections.Iterator):
                 continue
 
             if not multi_is_instance(getattr(self, prop), cls.schema[prop]):
@@ -202,26 +207,46 @@ class ObjectNode(AbstractNode):
             except:
                 raise AttributeError(name)
 
-    def get(self, name):
+    def get(self, name, default=None):
         """Returns the given property or None if not found.
         This can return either a literal value, or an iterator through other nodes if
         the given property actually was a link relation."""
         try:
             return self.__getattr__(name)
         except AttributeError:
-            return None
+            return default
 
-    def get_chained_properties(self, prop_list):
-        """Given a list of successive chained properties, returns the final value.
-        e.g.: Movie('2001').getChainedProperties([ 'director', 'firstName' ]) == 'Stanley'
+    def follow(self, prop_list):
+        """Given a list of successive chained properties, returns an iterator
+        to the nodes that could be reached by following those properties.
 
-        In case some property does not exist, it will raise an AttributeError."""
+        e.g.: Movie('2001').follow([ 'director', 'firstName' ]) == ['Stanley']
+
+        In case some property does not exist, it will raise an AttributeError.
+        """
         result = self
         for prop in prop_list:
             result = result.get(prop)
-            if isinstance(result, types.GeneratorType):
+            if isinstance(result, collections.Iterator):
+                # FIXME: implement me
+                pass
+
+        return result
+
+    def get_chained_properties(self, prop_list):
+        """Given a list of successive chained properties, returns the final value.
+        e.g.: Movie('2001').get_chained_properties([ 'director', 'firstName' ]) == 'Stanley'
+
+        In case some property does not exist, it will raise an AttributeError.
+        """
+        # FIXME: replace with follow()
+        result = self
+        for prop in prop_list:
+            result = result.get(prop)
+            if isinstance(result, collections.Iterator):
                 # FIXME: this will fail if it branches before the last property
-                result = toresult(list(result))
+                #result = toresult(list(result))
+                pass
 
         return result
 
@@ -276,7 +301,7 @@ class ObjectNode(AbstractNode):
     def add_link(self, name, other_node, reverse_name):
         g = self.graph()
 
-        if isinstance(other_node, list) or isinstance(other_node, types.GeneratorType):
+        if isinstance(other_node, list) or isinstance(other_node, collections.Iterator):
             for n in other_node:
                 g.add_link(self, name, n, reverse_name)
         else:
@@ -292,9 +317,9 @@ class ObjectNode(AbstractNode):
         g = self.graph()
 
         # first remove the old link(s)
-        # Note: we need to wrap the generator into a list here because it looks like otherwise
+        # FIXME: we need to wrap the generator into a list here because it looks like otherwise
         # the removeLink() call messes up with it
-        for n in list(self.get(name) or []): # NB: 'or []' because if the property doesn't exist yet, self.get() returns None
+        for n in list(self.get(name, [])):
             g.remove_link(self, name, n, reverse_name)
 
         # then add the new link(s)
@@ -326,7 +351,7 @@ class ObjectNode(AbstractNode):
             if name in exclude:
                 continue
             #print '     prop:', name,
-            if isinstance(value, types.GeneratorType):
+            if isinstance(value, collections.Iterator):
                 svalue = list(self.get(name))
                 value = list(value)
                 #print 'gen; value=', svalue, value
@@ -372,6 +397,7 @@ class ObjectNode(AbstractNode):
         cls = self.virtual_class()
 
         if cls is None:
+            log.error('FIXME: remove me')
             # most likely called from a node, but anyway we can't infer anything on the links so just display
             # them as anonymous ObjectNodes
             cls = self.__class__
@@ -380,15 +406,17 @@ class ObjectNode(AbstractNode):
         else:
             props = []
             for prop, value in self.items():
-                if prop in cls.schema._implicit:
+                # only print explicitly defined properties
+                if prop not in cls.schema:
                     continue
-                elif isinstance(value, types.GeneratorType):
+                elif isinstance(value, collections.Iterator):
                     if recurseLimit:
-                        props.append((prop, unicode(toresult([ v.to_string(cls = cls.schema.get(prop) or default,
-                                                                           recurseLimit = recurseLimit-1,
-                                                                           fancyIndent = fancyIndent) for v in value ]))))
+                        # TODO: if prop is ONE_TO_ONE, do not do a join
+                        props.append((prop, '['+', '.join([v.to_string(cls=cls.schema.get(prop) or default,
+                                                                       recurseLimit=recurseLimit-1,
+                                                                       fancyIndent=fancyIndent) for v in value ])+']'))
                     else:
-                        props.append((prop, u'[...]'))
+                        props.append((prop, '[...]'))
                 else:
                     props.append((prop, unicode(value)))
 
@@ -400,4 +428,4 @@ class ObjectNode(AbstractNode):
                 result += '    %s: %s\n' % (k, indented)
             return result + '}'
         else:
-            return u'%s(%s)' % (cls.__name__, ', '.join([ u'%s=%s' % (k, v) for k, v in props ]))
+            return '%s(%s)' % (cls.__name__, ', '.join([ '%s=%s' % (k, v) for k, v in props ]))

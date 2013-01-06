@@ -22,7 +22,7 @@ from pygoo.abstractdirectedgraph import AbstractDirectedGraph, Equal
 from pygoo.baseobject import BaseObject, get_node
 from pygoo.utils import reverse_lookup
 from pygoo import ontology
-import types
+import collections
 import logging
 
 log = logging.getLogger(__name__)
@@ -117,7 +117,9 @@ class ObjectGraph(AbstractDirectedGraph):
 
         # here we want to check first if we're adding a node that's in the same graph or not
         if node.graph is not other_node.graph:
-            raise ValueError('Trying to set attribute "%s" for %s to %s, but they\'re not in the same graph' % (name, node, other_node))
+            raise ValueError("Trying to set attribute '%s' for %s to %s, but they're not in the same graph" % (name, node, other_node))
+        if not isinstance(name, basestring) or not isinstance(reverse_name, basestring):
+            raise ValueError('name: %s and reverse_name: %s need to be both strings' % (name, reverse_name))
 
         self.add_directed_edge(node, name, other_node)
         self.add_directed_edge(other_node, reverse_name, node)
@@ -171,17 +173,25 @@ class ObjectGraph(AbstractDirectedGraph):
         # first import any other node this node might depend on
         newprops = []
         for prop, value, reverse_name in reverse_lookup(node, node_class):
+            #print '*'*20, prop, value, reverse_name
+            #print 'excl props:', excluded_properties, 'excl deps:', excluded_deps
+            if len(excluded_deps) > 5:
+                raise RuntimeError('inifinite recursion')
             #if (isinstance(value, AbstractNode) or
             #    (isinstance(value, list) and isinstance(value[0], AbstractNode))):
-            if isinstance(value, types.GeneratorType):
+            if isinstance(value, collections.Iterator):
                 # use only the explicit properties here
-                if prop not in excluded_properties and value not in excluded_deps:
+                if prop not in excluded_properties:
                     imported_nodes = []
                     for v in value:
+                        if v in excluded_deps:
+                            continue
                         log.debug('Importing dependency %s: %s' % (prop, v))
-                        imported_nodes.append(self.add_object(wrap_node(v, node_class.schema.get(prop)),
-                                                              recurse,
-                                                              excluded_deps = excluded_deps + [node]).node)
+                        cls = node_class.schema.prop_cls(prop)
+                        new_node = self.add_object(wrap_node(v, cls),
+                                                   recurse,
+                                                   excluded_deps=excluded_deps + [node]).node
+                        imported_nodes.append(new_node)
                     newprops.append((prop, imported_nodes, reverse_name))
             else:
                 newprops.append((prop, value, reverse_name))

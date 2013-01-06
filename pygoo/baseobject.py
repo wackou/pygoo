@@ -18,10 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import unicode_literals
 from pygoo.abstractnode import AbstractNode
-from pygoo.utils import is_of, reverse_lookup, toresult, multi_is_instance, check_class
+from pygoo.utils import is_of, reverse_name, reverse_lookup, check_class
 from pygoo import ontology
-import types
+import collections
 import logging
 
 log = logging.getLogger(__name__)
@@ -75,8 +76,8 @@ class OntologyClass(type):
         cls.reverse_lookup = dict(vars[1])
         cls.valid = set(vars[2])
         cls.unique = set(vars[3])
-        cls.display_order = set(vars[4])
-        cls.converters = set(vars[5])
+        cls.display_order = list(vars[4])
+        cls.converters = dict(vars[5])
 
 
 class BaseObject(object):
@@ -205,8 +206,13 @@ class BaseObject(object):
         # if not a valid instance, remove it from the list of valid classes so that the next check will fail
         if created and not self.node.graph()._dynamic:
             if allow_incomplete and not self.node.has_valid_properties(self.__class__, set(self.__class__.valid).intersection(set(self.node.keys()))):
+                # FIXME: change to log.debug
+                log.warning('removing1 class %s', self.__class__)
                 self.node.remove_class(self.__class__)
+            # FIXME: remove the is_valid_check(), no? nodes should always be instantiated
+            #        from their class
             if not allow_incomplete and not self.node.is_valid_instance(self.__class__):
+                log.warning('removing2 class %s', self.__class__)
                 self.node.remove_class(self.__class__)
 
 
@@ -232,10 +238,10 @@ class BaseObject(object):
     def __contains__(self, prop):
         return prop in self.node
 
-    def get(self, name, default = None):
+    def get(self, name, default=None):
         try:
             return getattr(self, name)
-        except:
+        except AttributeError:
             return default
 
 
@@ -246,20 +252,25 @@ class BaseObject(object):
 
         # if the result is an ObjectNode, wrap it with the class it has been given in the class schema
         # if it was not in the class schema, simply returns an instance of BaseObject
-        if isinstance(result, types.GeneratorType):
+        if isinstance(result, collections.Iterator):
             # FIXME: should rather use ResultClass.make_virtual() or sth similar to
             # promote automatically the node to the class it has instead of getting
             # the class from the schema
-            ResultClass = self.__class__.schema.get(name) or BaseObject
+            ResultClass = self.__class__.schema.prop_cls(name) or BaseObject
             def result_iterator():
                 for node in result:
                     yield ResultClass(basenode=node)
 
-            ontology.print_class(self.__class__)
-            print 'REL %s =' % name, self.__class__.schema._relations.get(name)
-            if self.__class__.schema._relations.get(name) == ontology.ONE_TO_ONE:
-                return next(result_iterator())
-            return result_iterator
+            rel = self.__class__.schema._relations.get(name)
+            if rel is not None:
+                if (rel == ontology.ONE_TO_ONE or
+                    rel == ontology.ORDERED_MANY_TO_ONE or
+                    rel == ontology.UNORDERED_MANY_TO_ONE):
+                    return next(result_iterator())
+                else:
+                    return result_iterator()
+
+            return next(result_iterator())
 
         # FIXME: better test here (although if the graph is consistent (ie: always returns generators) it shouldn't be necessary)
         #elif isinstance(result, list) and isinstance(result[0], AbstractNode):
@@ -311,10 +322,7 @@ class BaseObject(object):
         # and replaces BaseObjects with their underlying nodes.
         value = check_class(name, value, cls.schema)
 
-        # if we don't have a reverse lookup for this property, default to a reverse name of 'is%(Property)Of'
-        reverse_name = self.__class__.reverse_lookup.get(name) or is_of(name)
-
-        func(name, value, reverse_name, validate)
+        func(name, value, reverse_name(self.__class__, name), validate)
 
     def set(self, name, value, validate = True):
         """Sets the given value to the named property."""
@@ -325,12 +333,14 @@ class BaseObject(object):
 
     def __eq__(self, other):
         # TODO: should allow comparing a BaseObject with an ObjectNode?
-        if not isinstance(other, BaseObject): return False
+        if not isinstance(other, BaseObject):
+            return False
 
-        if self.node == other.node: return True
+        if self.node == other.node:
+            return True
 
         # FIXME: this could lead to cycles or very long chained __eq__ calling on properties
-        return self.explicit_items() == other.explicit_items()
+        return list(self.explicit_items()) == list(other.explicit_items())
 
     def __hash__(self):
         return hash(self.node)

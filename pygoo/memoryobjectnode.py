@@ -20,20 +20,26 @@
 
 from pygoo.abstractnode import AbstractNode
 from pygoo.objectnode import ObjectNode
-from pygoo.utils import tolist, toresult, is_literal, to_iterator
+from pygoo.utils import is_literal
 from pygoo import ontology
 import logging
 
 log = logging.getLogger(__name__)
 
 class MemoryObjectNode(ObjectNode):
+    """Implementation of a memory-backed object node.
 
-    def __init__(self, graph, props = list(), _classes = set()):
+    Literals are stored directly in the ``self._props`` dictionary, and relations
+    in the same dictionary, with links to the concerned ``ObjectNode``s.
+    """
+
+    def __init__(self, graph, props=None, _classes=None):
         # NB: this should go before super().__init__() because we need
         #     self._props and self._classes to exist before we can set
         #     attributes
+        log.debug('Creating MemoryObjectNode with props = %s' % props)
         self._props = {}
-        self._classes = set(_classes)
+        self._classes = set(_classes) if _classes is not None else set()
         super(MemoryObjectNode, self).__init__(graph, props)
 
         log.debug('MemoryNode.__init__: classes = %s' % list(self._classes))
@@ -102,22 +108,24 @@ class MemoryObjectNode(ObjectNode):
 
     def add_directed_edge(self, name, other_node):
         # otherNode should always be a valid node
-        node_list = tolist(self._props.get(name))
+        node_list = self._props.get(name) or []
         node_list.append(other_node)
-        self._props[name] = toresult(node_list)
+        self._props[name] = node_list
 
     def remove_directed_edge(self, name, other_node):
         # other_node should always be a valid node
-        node_list = tolist(self._props.get(name))
+        node_list = self._props.get(name) or []
         node_list.remove(other_node)
-        self._props[name] = toresult(node_list)
+        self._props[name] = node_list
 
         # TODO: we should have this, right?
-        if self._props[name] is None:
+        # although it seems necessary, we should either define whether we want
+        # it or not
+        if self._props[name] == []:
             del self._props[name]
 
 
-    def outgoing_edge_endpoints(self, name = None):
+    def outgoing_edge_endpoints(self, name=None):
         if name is None:
             return self._all_outgoing_edge_endpoints()
         else:
@@ -125,9 +133,9 @@ class MemoryObjectNode(ObjectNode):
 
     def _outgoing_edge_endpoints(self, name):
         # if name is not an edge, we need to throw an exception
-        result = self._props[name]
+        result = self._props.get(name, [])
         if not is_literal(result):
-            return to_iterator(result)
+            return iter(result)
         raise AttributeError
 
     def _all_outgoing_edge_endpoints(self):
@@ -140,10 +148,10 @@ class MemoryObjectNode(ObjectNode):
         return (k for k, v in self._props.items() if not is_literal(v))
 
     def edge_values(self):
-        return (to_iterator(v) for v in self._props.values() if not is_literal(v))
+        return (iter(v) for v in self._props.values() if not is_literal(v))
 
     def edge_items(self):
-        return ((k, to_iterator(v)) for k, v in self._props.items() if not is_literal(v))
+        return ((k, iter(v)) for k, v in self._props.items() if not is_literal(v))
 
 
     # The next methods are overriden for efficiency

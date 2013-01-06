@@ -20,7 +20,7 @@
 
 from pygoo.abstractnode import AbstractNode
 from pygoo import ontology
-import types
+import collections
 
 def to_utf8(obj):
     """Converts all unicode strings in the given object to utf-8 strings."""
@@ -36,55 +36,21 @@ def to_utf8(obj):
     else:
         return obj
 
-def tolist(obj):
-    """Return object as a list:
-     - if object is None, return the empty list
-     - if object is a single object (ie: not a list), return a list with a
-       single element being the given object
-     - otherwise, (ie: it is a list), return the object itself
-    """
-    if obj is None:
-        return []
-    elif isinstance(obj, list):
-        return obj
-    else:
-        return [ obj ]
-
-
-def toresult(lst):
-    """Take a list and return a value depending on the number of elements in
-    that list:
-     - 0 elements -> return None
-     - 1 element  -> return the single element
-     - 2 or more elements -> return the original list."""
-    if not lst:
-        return None
-    elif len(lst) == 1:
-        return lst[0]
-    else:
-        return lst
-
-
 def multi_is_instance(value, cls):
     """Return whether given object is an instance of the given class, of is a
     sequence that contains only objects of the given class."""
     # FIXME: we might be calling this function a little bit too much...
+    if isinstance(cls, (list, set)):
+        cls = next(iter(cls))
     if isinstance(value, list):
         return all(isinstance(v, cls) for v in value)
-    elif isinstance(value, types.GeneratorType):
+    elif isinstance(value, collections.Iterator):
         # we can't touch the generator otherwise the values will be lost
         return issubclass(cls, AbstractNode) or issubclass(cls, BaseObject) # NB: this behaviour is debatable
     else:
         return isinstance(value, cls)
 
 
-
-
-def to_iterator(obj):
-    """Return an iterator over all objects contained in obj, or just over obj
-    if it is not a sequence."""
-    for i in tolist(obj):
-        yield i
 
 def is_of(name):
     """Return the "is-of" name for the given property."""
@@ -96,16 +62,21 @@ def is_literal(value):
             any(multi_is_instance(value, cls) for cls in ontology.validLiteralTypes))
 
 
-def check_class(name, value, schema, converters = dict()):
+def check_class(name, value, schema, converters=None):
     """This function also converts BaseObjects to nodes after having checked
     their class."""
 
     # always try to autoconvert a string to a unicode
+    # TODO: still needed?
     if isinstance(value, str):
         value = value.decode('utf-8')
     elif multi_is_instance(value, str):
         value = [ v.decode('utf-8') for v in value ]
 
+    if converters:
+        conv = converters.get(name)
+        if conv is not None:
+            value = conv(value)
 
     def tonodes(v):
         ontology.import_class('BaseObject')
@@ -118,6 +89,8 @@ def check_class(name, value, schema, converters = dict()):
 
     if name not in schema or multi_is_instance(value, schema[name]):
         return tonodes(value)
+
+
 
     # try to autoconvert a string to int or float
     if isinstance(value, basestring) and schema[name] in [ int, float ]:
@@ -133,6 +106,17 @@ def check_class(name, value, schema, converters = dict()):
                     % (name, schema[name], type(value)))
 
 
+def reverse_name(cls, name):
+    cname = cls.reverse_lookup.get(name)
+    if cname is None:
+        # TODO: asserts this never happens if ontology has no contradiction
+        return is_of(name)
+    elif isinstance(cname, (list, set)):
+        return next(iter(cname))
+    else:
+        return cname
+
+
 def reverse_lookup(d, cls):
     """Returns a list of tuples used mostly for node creation, where BaseObjects have been replaced with their nodes.
     They are triples of (name, literal value or node generator, reverseName).
@@ -140,5 +124,5 @@ def reverse_lookup(d, cls):
     string -> unicode, string -> int  and  string -> float  are done automatically."""
     return [ (name,
               check_class(name, value, cls.schema, cls.converters),
-              cls.reverse_lookup.get(name) or is_of(name))
+              reverse_name(cls, name))
              for name, value in d.items() ]

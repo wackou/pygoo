@@ -28,14 +28,14 @@ Note that GuessIt is not a hard dependency on PyGoo proper, it is only needed if
 import directly pygoo.media or any submodule.
 """
 
+from pygoo import ontology
+
 from .file import File
 from .video import Video
-
-from pygoo import ontology
-ontology.print_classes()
 ontology.save_current_ontology('video')
 
 from .movie import Movie, Comment
 from .series import Series
 from .episode import Episode
 from .subtitle import Subtitle
+ontology.save_current_ontology('media')

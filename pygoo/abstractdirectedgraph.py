@@ -19,6 +19,7 @@
 #
 
 import sys
+import envoy
 import logging
 
 log = logging.getLogger(__name__)
@@ -174,13 +175,11 @@ class AbstractDirectedGraph(object):
     ### Utility methods
 
     def display_graph(self, title = ''):
-        import cPickle as pickle
         import tempfile
-        import subprocess
-        import os
 
         nodes, edges, classes = self.to_nodes_and_edges()
-        fid, filename = tempfile.mkstemp(suffix = '.png')
+        _, filename = tempfile.mkstemp()
+        filename = filename + '.png'
 
         dg = []
         dg += [ 'digraph G {' ]
@@ -207,11 +206,11 @@ class AbstractDirectedGraph(object):
 
         dg += [ '}' ]
 
-        subprocess.Popen([ 'dot', '-Tpng', '-o', filename ], stdin = subprocess.PIPE).communicate('\n'.join(dg))
-
+        r = envoy.run('dot -Tpng -o %s' % filename, data='\n'.join(dg))
         if sys.platform == 'linux2':
-            subprocess.Popen([ 'gwenview', filename ], stdout = subprocess.PIPE, stderr = subprocess.PIPE).communicate()
+            envoy.run('gwenview "%s"' % filename)
         else:
-            subprocess.Popen([ 'open', filename ], stdout = subprocess.PIPE, stderr = subprocess.PIPE).communicate()
+            envoy.run('open "%s"' % filename)
 
-        os.remove(filename)
+        # do not remove file other preview on mac os crashes
+        #os.remove(filename)
