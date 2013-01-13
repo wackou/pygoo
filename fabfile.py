@@ -22,7 +22,8 @@ class TestTask(Task):
     def run(self):
         local('PYTHONPATH=. python tests/%s.py' % self.name)
 
-test_basicnode = TestTask('basicnode', 'basic node functionality')
+test_objectnode = TestTask('objectnode', 'object node functionality')
+test_baseobject = TestTask('baseobject', 'BaseObject functionality')
 test_datamodel = TestTask('datamodel', 'ORM functionality')
 test_advancedgraph = TestTask('advancedgraph', 'advanced graph operations')
 test_inheritance = TestTask('inheritance', 'inheritance')

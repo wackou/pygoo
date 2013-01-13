@@ -26,7 +26,7 @@ from pygoo.slogging import setupLogging
 import logging
 import os
 
-MAIN_LOGGING_LEVEL = logging.WARNING
+MAIN_LOGGING_LEVEL = logging.INFO
 
 setupLogging()
 logging.getLogger().setLevel(MAIN_LOGGING_LEVEL)

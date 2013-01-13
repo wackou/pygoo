@@ -22,6 +22,18 @@ from pygoo.abstractnode import AbstractNode
 from pygoo import ontology
 import collections
 
+
+# Nice & clean enum implementation by Gabriel Genellina, MIT licensed
+# as found at http://code.activestate.com/recipes/577024-yet-another-enum-for-python/
+def enum(typename, field_names):
+    """Create a new enumeration type"""
+
+    if isinstance(field_names, str):
+        field_names = field_names.replace(',', ' ').split()
+    d = dict((reversed(nv) for nv in enumerate(field_names)), __slots__ = ())
+    return type(typename, (object,), d)()
+
+
 def to_utf8(obj):
     """Converts all unicode strings in the given object to utf-8 strings."""
     if isinstance(obj, unicode):
@@ -46,7 +58,8 @@ def multi_is_instance(value, cls):
         return all(isinstance(v, cls) for v in value)
     elif isinstance(value, collections.Iterator):
         # we can't touch the generator otherwise the values will be lost
-        return issubclass(cls, AbstractNode) or issubclass(cls, BaseObject) # NB: this behaviour is debatable
+        from pygoo.baseobject import BaseObject
+        return issubclass(cls, AbstractNode) or issubclass(cls, BaseObject) # FIXME: this behaviour is debatable
     else:
         return isinstance(value, cls)
 
@@ -58,38 +71,24 @@ def is_of(name):
 
 def is_literal(value):
     return (type(value) in ontology.validLiteralTypes or
-            value is None or # TODO: is None could be checked here for validity in the schema
-            any(multi_is_instance(value, cls) for cls in ontology.validLiteralTypes))
+            value is None) # TODO: is None could be checked here for validity in the schema
 
 
 def check_class(name, value, schema, converters=None):
-    """This function also converts BaseObjects to nodes after having checked
-    their class."""
+    """This function checks whether value can be converted to a valid type
+    according to the schema, optionally using some converter function.
 
-    # always try to autoconvert a string to a unicode
-    # TODO: still needed?
-    if isinstance(value, str):
-        value = value.decode('utf-8')
-    elif multi_is_instance(value, str):
-        value = [ v.decode('utf-8') for v in value ]
+    Return the converted value if an adequate converter could be found, or
+    the original value otherwise"""
 
     if converters:
         conv = converters.get(name)
         if conv is not None:
             value = conv(value)
 
-    def tonodes(v):
-        ontology.import_class('BaseObject')
-        if isinstance(v, BaseObject):
-            return v.node
-        elif isinstance(v, list) and v != [] and isinstance(v[0], BaseObject):
-            return (n.node for n in v)
-        else:
-            return v
 
     if name not in schema or multi_is_instance(value, schema[name]):
-        return tonodes(value)
-
+        return value
 
 
     # try to autoconvert a string to int or float
@@ -99,8 +98,6 @@ def check_class(name, value, schema, converters=None):
         except ValueError:
             pass
 
-
-    # TODO: use specified converters, when available
 
     raise TypeError("The '%s' attribute is of type '%s' but you tried to assign it a '%s'"
                     % (name, schema[name], type(value)))
@@ -118,7 +115,7 @@ def reverse_name(cls, name):
 
 
 def reverse_lookup(d, cls):
-    """Returns a list of tuples used mostly for node creation, where BaseObjects have been replaced with their nodes.
+    """Returns a list of tuples used mostly for node creation.
     They are triples of (name, literal value or node generator, reverseName).
     This also checks for type validity and converts the values if they have type converters.
     string -> unicode, string -> int  and  string -> float  are done automatically."""

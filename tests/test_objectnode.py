@@ -21,7 +21,7 @@
 from __future__ import unicode_literals
 from pygootest import *
 
-class TestAbstractNode(TestCase):
+class TestObjectNode(TestCase):
 
     def setUp(self):
         ontology.clear()
@@ -109,7 +109,8 @@ class TestAbstractNode(TestCase):
         n.friend = [ n2, n3 ]
         self.assert_(n in n2.isFriendOf)
         self.assert_(n in n3.isFriendOf)
-        self.assertEqual(n3.get('friend'), None)
+        with self.assertRaises(StopIteration):
+            next(n3.get('friend'))
 
         n4 = g.create_node()
         n4.friend = n.friend
@@ -125,96 +126,9 @@ class TestAbstractNode(TestCase):
         self.assert_(n4 in n3.isFriendOf)
 
 
-    def testBaseObject(self, GraphClass = MemoryObjectGraph):
-        class NiceGuy(BaseObject):
-            schema = { 'friend': [BaseObject] }
-            valid = [ 'friend' ]
-            reverse_lookup = { 'friend': ['friendOf'] }
-
-        # There is a problem when the reverse-lookup has the same name as the property because of the types:
-        # NiceGuy.friend = BaseObject, BaseObject.friend = NiceGuy
-        #
-        # it should also be possible to have A.friend = B and C.friend = B, and not be a problem for B, ie: type(B.friend) in [ A, C ]
-        #
-        # or we should restrict the ontology only to accept:
-        #  - no reverseLookup where key == value
-        #  - no 2 classes with the same link types to a third class
-        # actually, no reverseLookup where the implicit property could override an already existing one
-
-        g1 = GraphClass()
-        g2 = GraphClass()
-
-        n1 = g1.BaseObject(n='n1', a=23)
-        n2 = g1.NiceGuy(n='n2', friend=n1)
-        self.assertEqual(next(n1.friendOf), n2)
-
-        r2 = g2.add_object(n2)
-        r2.n = 'r2'
-        self.assertEqual(next(n1.friendOf), n2)
-
-        n3 = g1.NiceGuy(name = 'other node', friend = n1)
-        r3 = g2.add_object(n3)
-
-        # TODO: also try adding n2 after n3 is created
-
-        o1 = g1.BaseObject(n = 'o1')
-        o2 = g1.BaseObject(n = 'o2')
-
-        old = next(n3.friend)
-        n3.friend = [ o1, o2 ]
-        self.assertEqual(next(o1.friendOf), n3)
-        self.assertEqual(next(o2.friendOf), n3)
-        self.assertEqual(next(old.friendOf), n2)
-
-        n4 = g1.NiceGuy(n = 'n4', friend = n3.friend)
-        self.assert_(o1 in n4.friend)
-        self.assert_(o2 in n4.friend)
-        self.assert_(n3 in o1.friendOf)
-        self.assert_(n3 in o2.friendOf)
-        self.assert_(n4 in o1.friendOf)
-        self.assert_(n4 in o2.friendOf)
-
-        n3.friend = []
-        self.assertEqual(next(o1.friendOf), n4)
-        self.assertEqual(next(o2.friendOf), n4)
-
-        g1.display_graph()
-        g1.save('/tmp/pygoo_unittest.db')
-
-        g3 = GraphClass()
-        g3.load('/tmp/pygoo_unittest.db')
-
-        self.assertEqual(g3.find_one(NiceGuy, n = 'n2').friend.a, 23)
-        self.assertEqual(g3.find_one(NiceGuy, n = 'n2').friend.node, g3.find_one(BaseObject, n = 'n1').node)
-
-        os.remove('/tmp/pygoo_unittest.db')
 
 
-    def atestAddObject(self):
-        ontology.import_ontology('media')
-
-        g = MemoryObjectGraph()
-
-        g1 = MemoryObjectGraph()
-        m1 = g1.Video(filename = 'a.avi',
-                      metadata = g1.Episode(series = g1.Series(title = 'A'),
-                                            season = 1,
-                                            episodeNumber = 1))
-        g.add_object(m1, recurse = Equal.OnUnique)
-
-        g2 = MemoryObjectGraph()
-        m2 = g2.Media(filename = 'a.srt',
-                      metadata = g2.Subtitle(language = 'en',
-                                             metadata = g2.Episode(series = g2.Series(title = 'A'),
-                                                                   season = 1,
-                                                                   episodeNumber = 1)))
-
-        g.add_object(m2, recurse = Equal.OnUnique)
-
-        self.assertEqual(len(g.find_all(Episode)), 1)
-
-
-suite = allTests(TestAbstractNode)
+suite = allTests(TestObjectNode)
 
 if __name__ == '__main__':
     TextTestRunner(verbosity=2).run(suite)

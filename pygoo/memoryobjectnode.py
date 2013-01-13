@@ -37,7 +37,7 @@ class MemoryObjectNode(ObjectNode):
         # NB: this should go before super().__init__() because we need
         #     self._props and self._classes to exist before we can set
         #     attributes
-        log.debug('Creating MemoryObjectNode with props = %s' % props)
+        #log.debug('Creating MemoryObjectNode with props = %s' % props)
         self._props = {}
         self._classes = set(_classes) if _classes is not None else set()
         super(MemoryObjectNode, self).__init__(graph, props)

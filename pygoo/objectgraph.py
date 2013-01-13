@@ -19,6 +19,7 @@
 #
 
 from pygoo.abstractdirectedgraph import AbstractDirectedGraph, Equal
+from pygoo.objectnode import ObjectNode
 from pygoo.baseobject import BaseObject, get_node
 from pygoo.utils import reverse_lookup
 from pygoo import ontology
@@ -113,11 +114,35 @@ class ObjectGraph(AbstractDirectedGraph):
 
 
     def add_link(self, node, name, other_node, reverse_name):
-        # otherNode should always be a valid instance of a node
+        """Add a link (bi-directional edge) from node to other_node, using the
+        given name and reverse name.
 
+        node and other_node need to be valid ObjectNode instances. If they are
+        BaseObjects instead, their respective node will be taken.
+        """
+        # otherNode should always be a valid instance of a node
+        if not isinstance(node, ObjectNode):
+            if isinstance(node, BaseObject):
+                node = node.node
+            else:
+                raise TypeError('Node %s needs to be of type ObjectNode, but is of type %s' % (node, type(node)))
+        if not isinstance(other_node, ObjectNode):
+            if isinstance(other_node, BaseObject):
+                other_node = other_node.node
+            else:
+                raise TypeError('other_node %s needs to be of type ObjectNode, but is of type %s' % (other_node, type(other_node)))
+
+        # FIXME: does this test make sense?
+        #if node.graph is not self:
+        #    raise ValueError('Trying to add a relation from a node that doesn\'t live in the same graph')
         # here we want to check first if we're adding a node that's in the same graph or not
         if node.graph is not other_node.graph:
             raise ValueError("Trying to set attribute '%s' for %s to %s, but they're not in the same graph" % (name, node, other_node))
+        # FIXME: remove this very expensive check later
+        # happens when a node believes it is in a graph but the graph doesn't know about it
+        if other_node not in node.graph():
+            raise ValueError("Trying to set attribute '%s' for %s to %s, but they're not in the same graph - 2" % (name, node, other_node))
+
         if not isinstance(name, basestring) or not isinstance(reverse_name, basestring):
             raise ValueError('name: %s and reverse_name: %s need to be both strings' % (name, reverse_name))
 
@@ -176,7 +201,7 @@ class ObjectGraph(AbstractDirectedGraph):
             #print '*'*20, prop, value, reverse_name
             #print 'excl props:', excluded_properties, 'excl deps:', excluded_deps
             if len(excluded_deps) > 5:
-                raise RuntimeError('inifinite recursion')
+                raise RuntimeError('Infinite recursion')
             #if (isinstance(value, AbstractNode) or
             #    (isinstance(value, list) and isinstance(value[0], AbstractNode))):
             if isinstance(value, collections.Iterator):

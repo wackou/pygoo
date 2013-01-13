@@ -38,15 +38,6 @@ def get_node(node):
     else:
         raise TypeError("Given object is not an ObjectNode or BaseObject instance")
 
-def to_nodes(d):
-    result = dict(d)
-    for k, v in d.items():
-        if isinstance(v, BaseObject):
-            result[k] = v.node
-        elif isinstance(v, list) and (v != [] and isinstance(v[0], BaseObject)):
-            result[k] = [ n.node for n in v ]
-    return result
-
 
 # Metaclass to be used for BaseObject so that they are automatically registered in the ontology
 class OntologyClass(type):
@@ -163,7 +154,7 @@ class BaseObject(object):
     #_implicitSchema = {}
 
     def __init__(self, basenode = None, graph = None, allow_incomplete = False, **kwargs):
-        #log.debug('%s.__init__: basenode = %s, args = %s' % (self.__class__.__name__, basenode, kwargs))
+        #log.debug('%s.__init__: basenode = %s (id: 0x%x), args = %s' % (self.__class__.__name__, basenode, id(basenode), kwargs))
         if graph is None and basenode is None:
             raise ValueError('You need to specify either a graph or a base node when instantiating a %s' % self.__class__.__name__)
 
@@ -216,6 +207,10 @@ class BaseObject(object):
                 self.node.remove_class(self.__class__)
 
 
+        self.init_validate_instance(created)
+
+
+    def init_validate_instance(self, created):
         # make sure that the new instance we're creating is actually a valid one
         # Note: the following comment shouldn't be necessary if the list of valid classes is always up-to-date
         #if not (self.node.isinstance(self.__class__) or
@@ -250,6 +245,7 @@ class BaseObject(object):
     def __getattr__(self, name):
         result = getattr(self.node, name)
 
+        #print 'baseobject.get(%s) == %s' % (name, result)
         # if the result is an ObjectNode, wrap it with the class it has been given in the class schema
         # if it was not in the class schema, simply returns an instance of BaseObject
         if isinstance(result, collections.Iterator):
@@ -388,8 +384,8 @@ class BaseObject(object):
         return self.node.virtual()
 
     def update(self, props):
-        props = to_nodes(props)
         for name, value in props.items():
+            log.debug('BaseObject.update: %s = %s' % (name, value))
             self.set(name, value, validate = False)
         self.node.update_valid_classes()
 

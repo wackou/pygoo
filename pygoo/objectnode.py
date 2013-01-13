@@ -162,6 +162,7 @@ class ObjectNode(AbstractNode):
     ### Container methods
 
     def keys(self):
+        # TODO: python 3.3: use 'yield from'
         for k in self.literal_keys():
             yield k
         for k in self.edge_keys():
@@ -264,11 +265,9 @@ class ObjectNode(AbstractNode):
         If value is an ObjectNode, we're actually setting a link between them two, so we use reverseName as the
         name of the link when followed in the other direction.
         If reverseName is not given, a default of 'isNameOf' (using the given name) will be used."""
-
-        if multi_is_instance(value, AbstractNode):
+        if isinstance(value, (BaseObject, AbstractNode, list, set, collections.Iterator)):
             if reverse_name is None:
                 reverse_name = is_of(name)
-
             self.set_link(name, value, reverse_name)
 
         elif is_literal(value):
@@ -350,11 +349,10 @@ class ObjectNode(AbstractNode):
         for name, value in props:
             if name in exclude:
                 continue
-            #print '     prop:', name,
+
             if isinstance(value, collections.Iterator):
                 svalue = list(self.get(name))
                 value = list(value)
-                #print 'gen; value=', svalue, value
 
                 if cmp == Equal.OnUnique:
                     # FIXME: this is an ugly workaround, but I need to get pygoo back on track
@@ -373,7 +371,6 @@ class ObjectNode(AbstractNode):
                 if result is False:
                     return False
             else:
-                #print 'normal; value=', self.get(name), value
                 if self.get(name) != value:
                     return False
 
@@ -407,7 +404,8 @@ class ObjectNode(AbstractNode):
             props = []
             for prop, value in self.items():
                 # only print explicitly defined properties
-                if prop not in cls.schema:
+                #if prop not in cls.schema:
+                if prop in cls.schema._implicit:
                     continue
                 elif isinstance(value, collections.Iterator):
                     if recurseLimit:

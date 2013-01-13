@@ -18,22 +18,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from pygoo.utils import enum
 import sys
 import envoy
 import logging
 
 log = logging.getLogger(__name__)
-
-# Nice & clean enum implementation by Gabriel Genellina, MIT licensed
-# as found at http://code.activestate.com/recipes/577024-yet-another-enum-for-python/
-def enum(typename, field_names):
-    """Create a new enumeration type"""
-
-    if isinstance(field_names, str):
-        field_names = field_names.replace(',', ' ').split()
-    d = dict((reversed(nv) for nv in enumerate(field_names)), __slots__ = ())
-    return type(typename, (object,), d)()
-
 
 
 Equal = enum('Equal',
@@ -130,7 +120,10 @@ class AbstractDirectedGraph(object):
         for n in self.nodes():
             for prop, links in n.edge_items():
                 for other_node in links:
-                    edges.append((rnodes[id(n)], prop, rnodes[id(other_node)]))
+                    try:
+                        edges.append((rnodes[id(n)], prop, rnodes[id(other_node)]))
+                    except KeyError:
+                        raise KeyError('Node %s (id: 0x%x) has prop %s that links to Node %s (id: 0x%x), which is not in graph...' % (n, id(n), prop, other_node, id(other_node)))
 
         return nodes, edges, classes
 
