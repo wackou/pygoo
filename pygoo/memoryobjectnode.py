@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+s#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # PyGoo - An Object-Graph mapper
@@ -42,7 +42,7 @@ class MemoryObjectNode(ObjectNode):
         self._classes = set(_classes) if _classes is not None else set()
         super(MemoryObjectNode, self).__init__(graph, props)
 
-        log.debug('MemoryNode.__init__: classes = %s' % list(self._classes))
+        #log.debug('MemoryNode.__init__: classes = %s', self._classes)
         graph._nodes.add(self)
 
 
@@ -125,20 +125,20 @@ class MemoryObjectNode(ObjectNode):
             del self._props[name]
 
 
-    def outgoing_edge_endpoints(self, name=None):
+    def follow_edge(self, name=None):
         if name is None:
-            return self._all_outgoing_edge_endpoints()
+            return self._all_follow_edge()
         else:
-            return self._outgoing_edge_endpoints(name)
+            return self._follow_edge(name)
 
-    def _outgoing_edge_endpoints(self, name):
+    def _follow_edge(self, name):
         # if name is not an edge, we need to throw an exception
         result = self._props.get(name, [])
         if not is_literal(result):
             return iter(result)
         raise AttributeError
 
-    def _all_outgoing_edge_endpoints(self):
+    def _all_follow_edge(self):
         for prop, eps in self.edge_items():
             for ep in eps:
                 yield ep

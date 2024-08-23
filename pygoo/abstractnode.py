@@ -66,8 +66,13 @@ class AbstractNode(object):
         This should implement identity of nodes, not properties equality (this should
         be done in the BaseObject instance)."""
         raise NotImplementedError
+        return self.id == other.id
 
     def __hash__(self):
+        raise NotImplementedError
+
+    @property
+    def id(self):
         raise NotImplementedError
 
     ## Methods needed for storing the nodes ontology (caching)
@@ -137,9 +142,11 @@ class AbstractNode(object):
         TODO: should we throw an exception if it doesn't exist or ignore it?"""
         raise NotImplementedError
 
-    def outgoing_edge_endpoints(self, name = None):
+    def follow_edge(self, name = None):
         """Return all the nodes which this node points to with the given edge type.
-        If name is None, return all outgoing edge points."""
+        If name is None, return all outgoing edge points.
+        :raises AttributeError: If the given name doesn't correspond to an outgoing edge of this node.
+        """
         # Note: it is *imperative* that this function return a generator and not
         #       just any iterable over the values
         raise NotImplementedError

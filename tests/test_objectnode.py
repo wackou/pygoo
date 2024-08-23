@@ -76,16 +76,16 @@ class TestObjectNode(TestCase):
         self.assertEqual(n.get_literal('title'), 'abc')
         self.assertEqual(list(n.literal_keys()), [ 'title' ])
         self.assertEqual(list(n.edge_keys()), [ 'friend' ])
-        self.assertEqual(list(n.outgoing_edge_endpoints('friend')), [ n2 ])
-        self.assertEqual(list(n2.outgoing_edge_endpoints('friend')), [ n ])
+        self.assertEqual(list(n.follow_edge('friend')), [ n2 ])
+        self.assertEqual(list(n2.follow_edge('friend')), [ n ])
 
         n3 = g.create_node()
         n.add_directed_edge('friend', n3)
         n3.add_directed_edge('friend', n)
-        self.assertEqual(len(list(n.outgoing_edge_endpoints('friend'))), 2)
-        self.assertEqual(len(list(n.outgoing_edge_endpoints())), 2)
-        self.assert_(n2 in n.outgoing_edge_endpoints('friend'))
-        self.assert_(n3 in n.outgoing_edge_endpoints('friend'))
+        self.assertEqual(len(list(n.follow_edge('friend'))), 2)
+        self.assertEqual(len(list(n.follow_edge())), 2)
+        self.assert_(n2 in n.follow_edge('friend'))
+        self.assert_(n3 in n.follow_edge('friend'))
 
 
     def testBasicObjectNode(self, ObjectGraphClass = MemoryObjectGraph):

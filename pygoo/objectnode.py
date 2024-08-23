@@ -204,7 +204,7 @@ class ObjectNode(AbstractNode):
             return self.get_literal(name)
         except:
             try:
-                return self.outgoing_edge_endpoints(name) # this should be an iterable over the pointed nodes
+                return self.follow_edge(name) # this should be an iterable over the pointed nodes
             except:
                 raise AttributeError(name)
 
@@ -341,37 +341,42 @@ class ObjectNode(AbstractNode):
     def same_properties(self, other, props = None, exclude = [], cmp = None):
         # NB: sameValidProperties and sameUniqueProperties should be defined in BaseObject
         # TODO: this can surely be optimized
-        if props is None:
-            props = other.items()
-        else:
-            props = [ (p, other.get(p)) for p in props ]
+        #if props is None:
+        #    props = other.items()
+        #else:
+        #    props = [ (p, other.get(p)) for p in props ]
 
-        for name, value in props:
+        for name in props:
             if name in exclude:
                 continue
 
-            if isinstance(value, collections.Iterator):
-                svalue = list(self.get(name))
-                value = list(value)
+            value = self.get(name)
+            other_value = other.get(name)
+
+            if isinstance(other_value, collections.Iterator):
+                lvalue = list(value)
+                olvalue = list(other_value)
 
                 if cmp == Equal.OnUnique:
                     # FIXME: this is an ugly workaround, but I need to get pygoo back on track
                     #        and this has to work *right now*
                     def same_props_obj(obj1, obj2):
-                        props = obj1.unique_properties()
-                        return obj1.node.same_properties(obj2.node, props, cmp = Equal.OnUnique)
+                        print '---- cmp == Equal.OnUnique hack'
+                        return obj1.node.same_properties(obj2.node,
+                                                         obj1.unique_properties(),
+                                                         cmp = Equal.OnUnique)
 
-                    result = (len(svalue) == len(value) and
-                              all(same_props_obj(v1.virtual(), v2.virtual()) for v1, v2 in zip(svalue, value)))
+                    result = (len(lvalue) == len(olvalue) and
+                              all(same_props_obj(v1.virtual(), v2.virtual()) for v1, v2 in zip(lvalue, olvalue)))
                 else:
                     # FIXME: v1.virtual() should not be used here...
-                    result = (len(svalue) == len(value) and
-                              all(v1.virtual() == v2.virtual() for v1, v2 in zip(svalue, value)))
+                    result = (len(lvalue) == len(olvalue) and
+                              all(v1.virtual() == v2.virtual() for v1, v2 in zip(lvalue, olvalue)))
 
                 if result is False:
                     return False
             else:
-                if self.get(name) != value:
+                if value != other_value:
                     return False
 
         return True

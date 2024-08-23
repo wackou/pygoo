@@ -44,6 +44,7 @@ class AbstractDirectedGraph(object):
     ObjectGraph can be automatically built upon it.
 
     The methods you need to implement fall into the following categories:
+     - return the root node
      - create / delete node(s)
      - get all nodes / only nodes from a given class
      - check whether a node lives in a given graph
@@ -70,8 +71,24 @@ class AbstractDirectedGraph(object):
         """Return an iterable on all the nodes in the graph."""
         raise NotImplementedError
 
+
+    def class_nodes(self):
+        for n in self.root_node().classes:
+            yield n
+
+    def class_node(self, cls):
+        """where cls can be: BaseObject? unicode?"""
+        if not isinstance(cls, basestring):
+            raise TypeError('Class: %s needs to be a string' % cls)
+        for c in self.class_nodes():
+            if c.name == cls:
+                return c
+        raise KeyError('Could not find class node for %s' % cls)
+
     def nodes_from_class(self, cls):
         """Return an iterable on the nodes of a given class."""
+        #for c in self.class_nodes():
+        #    if c
         raise NotImplementedError
 
 
@@ -205,5 +222,5 @@ class AbstractDirectedGraph(object):
         else:
             envoy.run('open "%s"' % filename)
 
-        # do not remove file other preview on mac os crashes
+        # do not remove file as it makes preview on mac os crash, for instance...
         #os.remove(filename)

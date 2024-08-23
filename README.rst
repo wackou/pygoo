@@ -13,3 +13,5 @@ are allowed
 .. _`Neo4j`: http://neo4j.org
 
 TODO: OneToMany is in fact OrderedList or UnorderedList (Set)
+
+TODO: change license to LGPLv3
